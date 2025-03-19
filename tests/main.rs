@@ -1,4 +1,4 @@
-use cucumber::{writer::{tee, Basic}, World, WriterExt};
+use cucumber::{writer::Basic, World, WriterExt};
 use cucumber_reporter::CucumberReporter;
 use steps::ReporterWorld;
 
@@ -10,7 +10,8 @@ async fn main() {
 
     ReporterWorld::cucumber()
         .with_writer(
-            Basic::stdout().summarized().tee::<ReporterWorld,_>(
+            Basic::stdout().summarized()
+            .tee::<ReporterWorld,_>(
                 CucumberReporter::new()
             )
         )

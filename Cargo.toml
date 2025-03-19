@@ -2,12 +2,22 @@
 name = "cucumber-reporter"
 version = "0.1.0"
 edition = "2021"
+exclude = [
+    "target/*",
+]
+license = "MIT"
+readme = "README.md"
+authors = [ "Titanium IT <marcof@titaniumit.nl>"]
+description = "html reporter for cucumber-rs"
 
 [dependencies]
+clap = "4.5.32"
 cucumber = "0.21.1"
+filenamify = "0.1.2"
 gherkin = { version = "0.14.0", features = ["serde"] }
 handlebars = { version = "6.3.1", features = ["rust-embed"] }
-markdown2pdf = "0.1.2"
+markdown-it = "0.6.1"
+printpdf = { version = "0.8.1", features = ["html"] }
 rust-embed = { version = "8.6.0", features = ["tokio"] }
 serde = { version = "1.0.219", features = ["derive"] }
 tokio = { version = "1.44.1", features = ["full"] }

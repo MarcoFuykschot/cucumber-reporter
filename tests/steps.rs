@@ -8,7 +8,12 @@ type Result<T> = std::result::Result<T,Box<dyn Error>>;
 pub struct ReporterWorld {}
 
 #[given(expr="a fact")]
+#[given(expr="a other fact")]
 pub async fn given_a_fact(_world:&mut ReporterWorld) {
+}
+
+#[given(expr="a fact with {string}")]
+pub async fn given_a_fact_with(_world:&mut ReporterWorld,_value:String) {
 }
 
 #[when(expr="something is executed")]
