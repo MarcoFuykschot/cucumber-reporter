@@ -13,7 +13,12 @@ pub async fn given_a_fact(_world:&mut ReporterWorld) {
 }
 
 #[given(expr="a fact with {string}")]
-pub async fn given_a_fact_with(_world:&mut ReporterWorld,_value:String) {
+pub async fn given_a_fact_with(_world:&mut ReporterWorld,value:String) -> Result<()> {
+    if value == "Value 2" {
+        Err("failed".into())
+    } else {
+        Ok(())
+    }
 }
 
 #[when(expr="something is executed")]

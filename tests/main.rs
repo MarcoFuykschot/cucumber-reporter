@@ -9,6 +9,7 @@ pub mod steps;
 async fn main() {
 
     ReporterWorld::cucumber()
+        .with_default_cli()
         .with_writer(
             Basic::stdout().summarized()
             .tee::<ReporterWorld,_>(

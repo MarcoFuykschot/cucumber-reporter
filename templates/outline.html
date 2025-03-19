@@ -1,0 +1,28 @@
+<h3>{{name}}</h3>
+<h4> {{scenario_description}}</h4>
+{{#each examples}}
+    <h4>Example {{name}}</h4>
+    <p>{{description}}</p>
+    <table>
+        <thead>
+            {{#each headers}}
+            <th>
+                {{this}}
+            </th>
+            <th>
+                Outcome
+            </th>
+            {{/each}}    
+        </thead>
+        <tbody>
+           {{#each rows}}
+           <tr>
+              {{#each row}}
+              <td>{{this}}</td>
+              <td></td>
+              {{/each}}
+           </tr>
+          {{/each}}
+        </tbody>
+    </table>
+{{/each}}
