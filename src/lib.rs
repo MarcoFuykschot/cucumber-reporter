@@ -9,7 +9,6 @@ use gherkin::{Examples, Feature, GherkinEnv, Scenario, Step};
 use handlebars::Handlebars;
 use rust_embed::Embed;
 use serde::Serialize;
-use std::rc::Rc;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
@@ -113,6 +112,12 @@ impl ToId for Examples {}
 impl ToId for Scenario {}
 impl ToId for String {}
 
+impl Default for CucumberReporter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CucumberReporter {
     pub fn new() -> Self {
         CucumberReporter {
@@ -124,15 +129,11 @@ impl CucumberReporter {
     }
 
     fn add_feature(&mut self, feature: Arc<Feature>) {
-        if !self.features.contains(&feature) {
-            if self.features.insert(feature.clone()) {
-                if !feature.scenarios.iter().any(|s| !s.examples.is_empty()) {
-                    let org =
-                        Feature::parse_path(feature.path.clone().unwrap(), GherkinEnv::default())
-                            .unwrap();
-                    self.orig_features.insert(Arc::new(org));
-                }
-            };
+        if !self.features.contains(&feature) && self.features.insert(feature.clone()) && !feature.scenarios.iter().any(|s| !s.examples.is_empty()) {
+            let org =
+                Feature::parse_path(feature.path.clone().unwrap(), GherkinEnv::default())
+                    .unwrap();
+            self.orig_features.insert(Arc::new(org));
         }
     }
 
@@ -277,18 +278,15 @@ impl CucumberReporter {
     }
 
     fn process_scenario<W>(&mut self, event: event::RetryableScenario<W>) {
-        match event.event {
-            event::Scenario::Step(gherkin_step, event) => match event {
-                event::Step::Passed(_capture_locations, _location) => {
-                    self.add_step(gherkin_step, StepState::Passed);
-                }
-                event::Step::Failed(_capture_locations, _location, _world, _step_error) => {
-                    self.add_step(gherkin_step, StepState::Failed);
-                }
-                _ => {}
-            },
+        if let event::Scenario::Step(gherkin_step, event) = event.event { match event {
+            event::Step::Passed(_capture_locations, _location) => {
+                self.add_step(gherkin_step, StepState::Passed);
+            }
+            event::Step::Failed(_capture_locations, _location, _world, _step_error) => {
+                self.add_step(gherkin_step, StepState::Failed);
+            }
             _ => {}
-        }
+        } }
     }
 
     fn outline_processed(&mut self, scenario: &Scenario) -> bool {
@@ -315,25 +313,19 @@ where
         ev: cucumber::parser::Result<cucumber::Event<cucumber::event::Cucumber<W>>>,
         cli: &Self::Cli,
     ) {
-        match ev {
-            Ok(Event { value, .. }) => match value {
-                Feature(gherkin_feature, event) => {
-                    self.add_feature(gherkin_feature);
-                    match event {
-                        event::Feature::Rule(_rule, event) => match event {
-                            event::Rule::Scenario(_, event) => self.process_scenario(event),
-                            _ => {}
-                        },
-                        event::Feature::Scenario(_, event) => self.process_scenario(event),
-                        _ => {}
-                    }
+        if let Ok(Event { value, .. }) = ev { match value {
+            Feature(gherkin_feature, event) => {
+                self.add_feature(gherkin_feature);
+                match event {
+                    event::Feature::Rule(_rule, event) => if let event::Rule::Scenario(_, event) = event { self.process_scenario(event) },
+                    event::Feature::Scenario(_, event) => self.process_scenario(event),
+                    _ => {}
                 }
-                cucumber::event::Cucumber::Finished => {
-                    let _ = self.finish(cli).await.unwrap();
-                }
-                _ => {}
-            },
+            }
+            cucumber::event::Cucumber::Finished => {
+                self.finish(cli).await.unwrap();
+            }
             _ => {}
-        };
+        } };
     }
 }
