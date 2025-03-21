@@ -1,28 +1,50 @@
 <h3>{{name}}</h3>
 <h4> {{scenario_description}}</h4>
+
+<table>
+    <thead>
+        <tr>
+            <th>Step</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each steps }}
+        <tr>
+            <td>
+                {{#if is_and }}
+                <span style="margin-left: 10px;"> {{step_type}} {{step_template}} </span>
+                {{else}}
+                {{step_type}} {{step_template}}
+                {{/if}}
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
 {{#each examples}}
-    <h4>Example {{name}}</h4>
-    <p>{{description}}</p>
-    <table>
-        <thead>
-            {{#each headers}}
-            <th>
-                {{this}}
-            </th>
-            <th>
-                Outcome
-            </th>
-            {{/each}}    
-        </thead>
-        <tbody>
-           {{#each rows}}
-           <tr>
-              {{#each row}}
-              <td>{{this}}</td>
-              <td></td>
-              {{/each}}
-           </tr>
-          {{/each}}
-        </tbody>
-    </table>
+<h4>Example {{name}}</h4>
+<p>{{description}}</p>
+<table>
+    <thead>
+        {{#each headers}}
+        <th>
+            {{this}}
+        </th>
+        <th>
+            Outcome
+        </th>
+        {{/each}}
+    </thead>
+    <tbody>
+        {{#each rows}}
+        <tr>
+            {{#each row}}
+            <td>{{this}}</td>
+            <td></td>
+            {{/each}}
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
 {{/each}}

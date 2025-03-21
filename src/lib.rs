@@ -5,10 +5,11 @@ use cucumber::{
     writer::Normalized,
     Event,
 };
-use gherkin::{Examples, Feature, Scenario, Step};
+use gherkin::{Examples, Feature, GherkinEnv, Scenario, Step};
 use handlebars::Handlebars;
 use rust_embed::Embed;
 use serde::Serialize;
+use std::rc::Rc;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
@@ -29,6 +30,7 @@ pub enum StepState {
 #[derive(Debug)]
 pub struct CucumberReporter {
     features: HashSet<Arc<Feature>>,
+    orig_features: HashSet<Arc<Feature>>,
     step_states: HashMap<u64, StepState>,
     outlines: HashSet<u64>,
 }
@@ -47,8 +49,20 @@ struct FeatureRenderData {
 struct StepRenderData {
     is_and: bool,
     step_type: String,
-    step_state: StepState,
+    step_state: Option<StepState>,
     step_template: String,
+}
+
+/// Todo: gerkin languages
+impl StepRenderData {
+    fn new(step: &Step, state: Option<StepState>) -> Self {
+        Self {
+            is_and: step.keyword.to_lowercase().contains("and"),
+            step_type: step.keyword.clone(),
+            step_template: step.value.clone(),
+            step_state: state,
+        }
+    }
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -68,7 +82,6 @@ struct ScenarioRenderData {
 #[derive(Serialize, Clone, Debug)]
 struct ExampleRowRenderData {
     pub row: Vec<String>,
-    pub steps: Vec<StepRenderData>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -84,6 +97,7 @@ struct OutlineRenderData {
     pub name: String,
     pub scenario_description: String,
     pub examples: Vec<ExampleRenderData>,
+    pub steps: Vec<StepRenderData>,
 }
 
 trait ToId: Hash {
@@ -103,22 +117,30 @@ impl CucumberReporter {
     pub fn new() -> Self {
         CucumberReporter {
             features: HashSet::new(),
+            orig_features: HashSet::new(),
             step_states: HashMap::new(),
             outlines: HashSet::new(),
         }
     }
 
-    pub async fn add_feature(&mut self, feature: Arc<Feature>) {
+    fn add_feature(&mut self, feature: Arc<Feature>) {
         if !self.features.contains(&feature) {
-            self.features.insert(feature.clone());
+            if self.features.insert(feature.clone()) {
+                if !feature.scenarios.iter().any(|s| !s.examples.is_empty()) {
+                    let org =
+                        Feature::parse_path(feature.path.clone().unwrap(), GherkinEnv::default())
+                            .unwrap();
+                    self.orig_features.insert(Arc::new(org));
+                }
+            };
         }
     }
 
-    pub async fn add_step(&mut self, step: Arc<Step>, state: StepState) {
+    fn add_step(&mut self, step: Arc<Step>, state: StepState) {
         self.step_states.insert(step.id(), state);
     }
 
-    pub async fn finish(&mut self, args: &ReporterArgs) -> Result<()> {
+    async fn finish(&mut self, args: &ReporterArgs) -> Result<()> {
         let mut templates = Handlebars::new();
         templates.register_embed_templates::<HtmlTemplates>()?;
 
@@ -126,7 +148,9 @@ impl CucumberReporter {
         for feature in features {
             let mut scenarios = Vec::new();
             for scenario in &feature.scenarios {
-                let scenario_html = self.scenario_render(&templates, feature.clone(), scenario)?.clone();
+                let scenario_html = self
+                    .scenario_render(&templates, feature.clone(), scenario)?
+                    .clone();
                 scenarios.push(scenario_html.to_string());
             }
             let mut rules = Vec::new();
@@ -158,10 +182,15 @@ impl CucumberReporter {
         Ok(())
     }
 
-    fn render_rule(&mut self, templates: &Handlebars<'_>,feature: Arc<Feature>, rule: &gherkin::Rule) -> Result<String> {
+    fn render_rule(
+        &mut self,
+        templates: &Handlebars<'_>,
+        feature: Arc<Feature>,
+        rule: &gherkin::Rule,
+    ) -> Result<String> {
         let mut scenarios = Vec::new();
         for scenario in &rule.scenarios {
-            let scenario_html = self.scenario_render(templates,feature.clone(), scenario)?;
+            let scenario_html = self.scenario_render(templates, feature.clone(), scenario)?;
             scenarios.push(scenario_html);
         }
         let data = RuleRenderData {
@@ -180,41 +209,52 @@ impl CucumberReporter {
         scenario: &gherkin::Scenario,
     ) -> Result<String> {
         if !scenario.examples.is_empty() {
-            if self.outline_processed(scenario) {
-                let mut data = OutlineRenderData {
-                    name: scenario.name.clone(),
-                    scenario_description: scenario.description.clone().unwrap_or_default(),
-                    examples: Vec::new(),
-                };
+            let org_feature = self
+                .orig_features
+                .iter()
+                .find(|f| f.name == feature.name)
+                .unwrap();
 
-                for example in &scenario.examples {
+            let org_scenario = org_feature
+                .scenarios
+                .iter()
+                .find(|s| s.span == scenario.span)
+                .unwrap()
+                .clone();
 
-                    let scenarios =  feature.scenarios
+            if self.outline_processed(&org_scenario) {
+                let data = OutlineRenderData {
+                    name: org_scenario.name.clone(),
+                    scenario_description: org_scenario.description.clone().unwrap_or_default(),
+                    examples: scenario
+                        .examples
                         .iter()
-                        .filter(|s| s.name == scenario.name);
-
-                    if let Some(table) = &example.table {
-                        let example_data = ExampleRenderData {
-                            name: example.name.clone().unwrap_or_default(),
-                            description: example.description.clone().unwrap_or_default(),
-                            headers: table.rows.first().unwrap().to_vec(),
-                            rows: table
-                                .rows
-                                .iter()
-                                .skip(1)
-                                .map(|row| ExampleRowRenderData {
-                                    row: row.to_vec(),
-                                    steps: Vec::new()
-                                })
-                                .collect(),
-                        };
-                        data.examples.push(example_data);
-                    }
-                }
-                let outline = templates.render("outline.html", &data)?;
-                Ok(outline)
+                        .map(|ex| {
+                            let table = ex.table.clone().expect("table expected").clone();
+                            ExampleRenderData {
+                                name: ex.name.clone().unwrap_or_default(),
+                                description: ex.description.clone().unwrap_or_default(),
+                                headers: table.rows.first().unwrap().clone(),
+                                rows: table
+                                    .rows
+                                    .iter()
+                                    .skip(1)
+                                    .enumerate()
+                                    .map(|(id, row)| ExampleRowRenderData { row: row.clone() })
+                                    .collect::<Vec<_>>(),
+                            }
+                        })
+                        .collect::<Vec<_>>(),
+                    steps: org_scenario
+                        .steps
+                        .iter()
+                        .map(|s| StepRenderData::new(s, None))
+                        .collect(),
+                };
+                let scenario_html = templates.render("outline.html", &data)?;
+                Ok(scenario_html.to_string())
             } else {
-                Ok("".into())
+                Ok("".to_string())
             }
         } else {
             let data = ScenarioRenderData {
@@ -227,7 +267,7 @@ impl CucumberReporter {
                         is_and: s.keyword.contains("And"),
                         step_type: s.keyword.clone(),
                         step_template: s.value.clone(),
-                        step_state: self.step_states.get(&s.id()).unwrap().clone(),
+                        step_state: self.step_states.get(&s.id()).cloned(),
                     })
                     .collect(),
             };
@@ -236,14 +276,14 @@ impl CucumberReporter {
         }
     }
 
-    async fn process_scenario<W>(&mut self, event: event::RetryableScenario<W>) {
+    fn process_scenario<W>(&mut self, event: event::RetryableScenario<W>) {
         match event.event {
             event::Scenario::Step(gherkin_step, event) => match event {
                 event::Step::Passed(_capture_locations, _location) => {
-                    self.add_step(gherkin_step, StepState::Passed).await;
+                    self.add_step(gherkin_step, StepState::Passed);
                 }
                 event::Step::Failed(_capture_locations, _location, _world, _step_error) => {
-                    self.add_step(gherkin_step, StepState::Failed).await;
+                    self.add_step(gherkin_step, StepState::Failed);
                 }
                 _ => {}
             },
@@ -252,7 +292,7 @@ impl CucumberReporter {
     }
 
     fn outline_processed(&mut self, scenario: &Scenario) -> bool {
-        self.outlines.insert(scenario.name.id())
+        self.outlines.insert(scenario.id())
     }
 }
 
@@ -278,13 +318,13 @@ where
         match ev {
             Ok(Event { value, .. }) => match value {
                 Feature(gherkin_feature, event) => {
-                    self.add_feature(gherkin_feature).await;
+                    self.add_feature(gherkin_feature);
                     match event {
                         event::Feature::Rule(_rule, event) => match event {
-                            event::Rule::Scenario(_, event) => self.process_scenario(event).await,
+                            event::Rule::Scenario(_, event) => self.process_scenario(event),
                             _ => {}
                         },
-                        event::Feature::Scenario(_, event) => self.process_scenario(event).await,
+                        event::Feature::Scenario(_, event) => self.process_scenario(event),
                         _ => {}
                     }
                 }
