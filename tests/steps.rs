@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use cucumber::{given, then, when, World};
+use cucumber::{World, given, then, when};
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 

@@ -12,6 +12,7 @@ description = "html reporter for cucumber-rs"
 repository = "https://github.com/MarcoFuykschot/cucumber-reporter.git"
 
 [dependencies]
+clap = "4.5.32"
 cucumber = "0.21.1"
 filenamify = "0.1.2"
 gherkin = { version = "0.14.0", features = ["serde"] }

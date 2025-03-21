@@ -1,4 +1,4 @@
-use cucumber::{writer::Basic, World, WriterExt};
+use cucumber::{World, WriterExt, writer::Basic};
 use cucumber_reporter::CucumberReporter;
 use steps::ReporterWorld;
 

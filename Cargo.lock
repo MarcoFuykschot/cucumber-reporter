@@ -313,6 +313,7 @@ dependencies = [
 name = "cucumber-reporter"
 version = "0.2.0"
 dependencies = [
+ "clap",
  "cucumber",
  "filenamify",
  "gherkin",
