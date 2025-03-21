@@ -13,6 +13,7 @@ use std::{
     collections::{HashMap, HashSet},
     error::Error,
     fmt::Debug,
+
     hash::{DefaultHasher, Hash, Hasher},
     sync::Arc,
 };
@@ -26,6 +27,18 @@ pub enum StepState {
     Passed,
     Failed,
 }
+
+///  How to add to de default writer 
+/// ```rust
+///   World::cucumber()
+///        .with_default_cli()
+///        .with_writer(
+///           Basic::stdout()
+///                .summarized()
+///                .tee::<World, _>(CucumberReporter::new()),
+///        )
+///        .run("features").await;
+/// ``` 
 #[derive(Debug)]
 pub struct CucumberReporter {
     features: HashSet<Arc<Feature>>,

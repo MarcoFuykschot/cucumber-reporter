@@ -1,7 +1,7 @@
 [package]
 name = "cucumber-reporter"
-version = "0.1.0"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
 exclude = [
     "target/*",
 ]
@@ -9,6 +9,7 @@ license = "MIT"
 readme = "README.md"
 authors = [ "Titanium IT <marcof@titaniumit.nl>"]
 description = "html reporter for cucumber-rs"
+repository = "https://github.com/MarcoFuykschot/cucumber-reporter.git"
 
 [dependencies]
 clap = "4.5.32"
