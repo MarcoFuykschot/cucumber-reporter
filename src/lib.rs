@@ -93,6 +93,7 @@ struct ScenarioRenderData {
 #[derive(Serialize, Clone, Debug)]
 struct ExampleRowRenderData {
     pub row: Vec<String>,
+    pub steps: Vec<StepRenderData>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -244,6 +245,23 @@ impl CucumberReporter {
                 .clone();
 
             if self.outline_processed(&org_scenario) {
+                let example_ids = org_scenario
+                    .examples
+                    .iter()
+                    .map(|e| e.id())
+                    .collect::<Vec<_>>();
+
+                let all_scenarios = feature
+                    .scenarios
+                    .iter()
+                    .filter(|s| {
+                        s.examples
+                            .iter()
+                            .map(|e| e.id())
+                            .all(|f| example_ids.contains(&f))
+                    })
+                    .collect::<Vec<_>>();
+
                 let data = OutlineRenderData {
                     name: org_scenario.name.clone(),
                     scenario_description: org_scenario.description.clone().unwrap_or_default(),
@@ -261,7 +279,28 @@ impl CucumberReporter {
                                     .iter()
                                     .skip(1)
                                     .enumerate()
-                                    .map(|(id, row)| ExampleRowRenderData { row: row.clone() })
+                                    .map(|(id, row)| {
+                                        let scenario_id = ex.position.line + 2 + id;
+                                        let scenario = all_scenarios
+                                            .iter()
+                                            .find(|s| s.position.line == scenario_id)
+                                            .unwrap();
+                                        ExampleRowRenderData {
+                                            row: row.clone(),
+                                            steps: scenario
+                                                .steps
+                                                .iter()
+                                                .map(|step| {
+                                                    StepRenderData::new(
+                                                        step,
+                                                        self.step_states
+                                                                .get(&step.id())
+                                                                .cloned(),
+                                                    )
+                                                })
+                                                .collect::<Vec<_>>(),
+                                        }
+                                    })
                                     .collect::<Vec<_>>(),
                             }
                         })
