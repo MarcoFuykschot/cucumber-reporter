@@ -1,15 +1,7 @@
-
 <!DOCTYPE html>
 <html>
 
 <head>
-
-    <header exclude-pages="1"> <!-- do not render header on page 1 -->
-    </header>
-
-    <footer>
-    </footer>
-
     <style>
         body {
             font-family: 'Helvetica', sans-serif;
@@ -25,41 +17,50 @@
             margin: 10px 0;
             line-height: 1.5;
         }
-        .highlight {
-            background-color: #ffffcc;
-            padding: 5px;
-            border-radius: 3px;
-        }
-        ul {
-            margin: 15px 0;
-        }
-        li {
-            margin: 5px 0;
-        }
         table {
             border-collapse: collapse;
             width: 100%;
-            margin: 20px 0;
+            margin: 2px 0;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 2px;
             text-align: left;
         }
         th {
             background-color: #f2f2f2;
         }
-        .footer {
-            margin-top: 30px;
-            font-size: 0.8em;
-            text-align: center;
-            color: #666;
-        }
-    </style>
+      </style>
 </head>
 
 <body>
-    {{{this}}}
+    <table>
+        <thead>
+            <th>Feature</th>
+            <th>Rules</th>
+            <th>Scenarios</th>
+            <th>Steps</th>
+            <th>Errors</th>
+            <th>Skipped</th>
+        </thead>
+        <tbody>
+            {{#each features}}
+            <tr onclick="javascript:window.location.assign('{{link}}')">
+               <td>{{name}}</td>
+               <td>{{nr_rules}}</td>
+               <td>{{nr_scenarios}}</td>
+               <td>{{nr_steps}}</td>
+               <td>{{nr_errors}}</td>
+               <td>{{nr_skipped}}</td>
+            </tr>
+            {{#if description}}
+            <tr style="background-color: rgb(201, 201, 201);">
+                <td colspan="6">{{description}}</td>
+            </tr>
+            {{/if}}
+            {{/each}}
+        </tbody>
+    </table>
 <body>
 
 </html>

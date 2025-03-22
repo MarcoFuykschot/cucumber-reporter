@@ -11,3 +11,8 @@ Feature: Simple feature
         And a other fact
         When something is executed
         Then the result is failed
+        
+     Scenario: Scenario 3
+        Given a fact
+        Then a Skipped line
+        

@@ -1,27 +1,4 @@
 <h3>{{name}}</h3>
 <p>{{description}}</p>
-<table>
-    <thead>
-        <tr>
-            <th>Step</th>
-            <th>Outcome</th>
-        </tr>
-    </thead>
-    <tbody>
-        {{#each steps }}
-        <tr>
-            <td>
-                {{#if is_and }}
-                <span style="margin-left: 10px;"> {{step_type}} {{step_template}} </span>
-                {{else}}
-                {{step_type}} {{step_template}}
-                {{/if}}
-            </td>
-            <td>
-                {{step_state}}
-            </td>
-        </tr>
-        {{/each}}
-    </tbody>
-</table>
+{{> steps.html }}
 <hr>

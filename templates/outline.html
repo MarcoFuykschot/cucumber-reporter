@@ -1,6 +1,5 @@
 <h3>{{name}}</h3>
-<h4> {{scenario_description}}</h4>
-
+<p>{{scenario_description}}</p>
 <table>
     <thead>
         <tr>
@@ -37,36 +36,13 @@
         </th>
     </thead>
     <tbody>
-        {{#each rows as|example index|}}
-        <tr>
-            {{#each row}}
-            <td>{{this}}</td>
+        {{#each rows}}
+        <tr class="bg_{{example_state}}">
+            {{#each example}}
+            <td style="text-align: center">{{this}}</td>
             {{/each}}
             <td>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Step</th>
-                            <th>Outcome</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{#each example.steps }}
-                        <tr>
-                            <td>
-                                {{#if is_and }}
-                                <span style="margin-left: 10px;"> {{step_type}} {{step_template}} </span>
-                                {{else}}
-                                {{step_type}} {{step_template}}
-                                {{/if}}
-                            </td>
-                            <td>
-                                {{step_state}}
-                            </td>
-                        </tr>
-                        {{/each}}
-                    </tbody>
-                </table>
+                {{> steps.html}}
             </td>
         </tr>
         {{/each}}
