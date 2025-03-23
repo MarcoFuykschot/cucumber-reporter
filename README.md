@@ -1,4 +1,14 @@
+## Goal
 
+To create a reporter for the crate cucumber, that directly
+produces html files. 
+
+for each execute feature an html file is produced using the 
+name of the feature. At the end an index file is produced
+with all executed features and some stats.
+
+You can use the commandline option --output-html-path to change the output
+path of the html files. 
 
 ## Examples
 
@@ -59,3 +69,8 @@ Feature: documentation with outline
 <!--CONTENT-END:features/feature-with-outline.feature-->
 
 ![simple](/assets/outline.png)
+
+## planned 
+
+* direct pdf output
+* custom templating
