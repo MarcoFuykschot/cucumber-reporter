@@ -15,4 +15,3 @@ Feature: Simple feature
      Scenario: Scenario 3
         Given a fact
         Then a Skipped line
-        

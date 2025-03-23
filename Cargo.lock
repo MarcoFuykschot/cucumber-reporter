@@ -311,13 +311,14 @@ dependencies = [
 
 [[package]]
 name = "cucumber-reporter"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "clap",
  "cucumber",
  "filenamify",
  "gherkin",
  "handlebars",
+ "regex",
  "rust-embed",
  "serde",
  "tokio",

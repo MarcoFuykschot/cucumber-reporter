@@ -1,6 +1,6 @@
 [package]
 name = "cucumber-reporter"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 exclude = [
     "target/*",
@@ -24,3 +24,6 @@ tokio = { version = "1.44.1", features = ["full"] }
 [[test]]
 name="main"
 harness=false
+
+[build-dependencies]
+regex = "1.11.1"
