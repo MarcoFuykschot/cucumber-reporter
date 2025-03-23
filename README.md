@@ -8,7 +8,8 @@ name of the feature. At the end an index file is produced
 with all executed features and some stats.
 
 You can use the commandline option --output-html-path to change the output
-path of the html files. 
+path of the html files, default it uses the current directory where the tests
+are run.
 
 ## Examples
 
