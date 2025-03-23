@@ -39,7 +39,7 @@ Feature: Simple feature
 
 Will produce the following html output
 
-![simple](/assets/simple.png)
+![simple](assets/simple.png)
 
 A gherkin feature file using and outline 
 
@@ -69,7 +69,7 @@ Feature: documentation with outline
 ```
 <!--CONTENT-END:features/feature-with-outline.feature-->
 
-![simple](/assets/outline.png)
+![simple](assets/outline.png)
 
 ## planned 
 

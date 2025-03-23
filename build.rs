@@ -1,4 +1,11 @@
-use std::{error::Error, fs::File, io::Read, os::unix::fs::FileExt};
+use std::{
+    env,
+    error::Error,
+    fs::{self, File},
+    io::Read,
+    os::unix::fs::FileExt,
+    path::Path,
+};
 
 use regex::Regex;
 
@@ -34,5 +41,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         readme.write_all_at(content.as_bytes(), 0)?;
     }
+    let assets = std::fs::read_dir("assets")?;
+
+    let doc_path = Path::new("target")
+        .join("doc")
+        .join("cucumber_reporter")
+        .join("assets");
+
+    fs::create_dir_all(doc_path.clone())?;
+    for asset in assets {
+        let asset = asset?;
+        std::fs::copy(asset.path(), doc_path.join(asset.file_name()))?;
+    }
+
     Ok(())
 }
