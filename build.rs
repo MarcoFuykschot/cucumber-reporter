@@ -40,9 +40,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         readme.write_all_at(content.as_bytes(), 0)?;
     }
-    let assets = std::fs::read_dir("assets")?;
+
+    let source =std::env::var("CARGO_SOURCE_DIR").unwrap_or_default();
+    let assets_path = if std::env::var("DOCS_RS").is_ok() {
+        Path::new(source.as_str())
+    } else {
+        Path::new(".")
+    };
+
+    let assets_path = assets_path.join("assets");
+
+    let assets = std::fs::read_dir(assets_path)?;
 
     let target =std::env::var("CARGO_TARGET_DIR").unwrap_or_default();
+
     let doc_path = if std::env::var("DOCS_RS").is_ok() {
         Path::new(target.as_str())
     } else {
@@ -56,7 +67,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     for asset in assets {
         let asset = asset?;
-        std::fs::copy(asset.path(), doc_path.join(asset.file_name()))?;
+        let target_file = doc_path.join(asset.file_name());
+        println!("cargo::warning={:?} {:?}",asset,target_file);
+        std::fs::copy(asset.path(), target_file)?;
     }
 
     Ok(())
