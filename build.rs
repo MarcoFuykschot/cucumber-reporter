@@ -1,5 +1,4 @@
 use std::{
-    env,
     error::Error,
     fs::{self, File},
     io::Read,
@@ -43,12 +42,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let assets = std::fs::read_dir("assets")?;
 
-    let doc_path = Path::new("target")
-        .join("doc")
-        .join("cucumber_reporter")
-        .join("assets");
+    let doc_path = if std::env::var("DOCS_RS").is_ok() {
+        Path::new(std::env::var("CARGO_TARGET_DIR").unwrap().as_str()).to_path_buf()
+    } else {
+        let path = Path::new("target")
+            .join("doc")
+            .join("cucumber_reporter")
+            .join("assets");
+        fs::create_dir_all(path.clone())?;
+        path
+    };
 
-    fs::create_dir_all(doc_path.clone())?;
     for asset in assets {
         let asset = asset?;
         std::fs::copy(asset.path(), doc_path.join(asset.file_name()))?;
