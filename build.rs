@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         readme.write_all_at(content.as_bytes(), 0)?;
     }
 
-    let source =std::env::var("CARGO_SOURCE_DIR").unwrap_or_default();
+    let source = std::env::var("CARGO_SOURCE_DIR").unwrap_or_default();
     let assets_path = if std::env::var("DOCS_RS").is_ok() {
         Path::new(source.as_str())
     } else {
@@ -52,23 +52,24 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let assets = std::fs::read_dir(assets_path)?;
 
-    let target =std::env::var("CARGO_TARGET_DIR").unwrap_or_default();
-
+    let target_dir = std::env::var("CARGO_TARGET_DIR").unwrap_or_default();
+    let target = std::env::var("TARGET").unwrap_or_default();
     let doc_path = if std::env::var("DOCS_RS").is_ok() {
-        Path::new(target.as_str())
+        Path::new(target_dir.as_str()).join(target.as_str())
     } else {
-        Path::new("target")
+        Path::new("target").to_path_buf()
     };
-      let doc_path=  doc_path.join("doc")
-            .join("cucumber_reporter")
-            .join("assets");
+    let doc_path = doc_path
+        .join("doc")
+        .join("cucumber_reporter")
+        .join("assets");
 
-     fs::create_dir_all(doc_path.clone())?;
+    fs::create_dir_all(doc_path.clone())?;
 
     for asset in assets {
         let asset = asset?;
         let target_file = doc_path.join(asset.file_name());
-        println!("cargo::warning={:?} {:?}",asset,target_file);
+        println!("cargo::warning={:?} {:?}", asset, target_file);
         std::fs::copy(asset.path(), target_file)?;
     }
 
