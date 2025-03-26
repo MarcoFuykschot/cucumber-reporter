@@ -1,4 +1,4 @@
-Feature: Simple feature
+Feature: simple
     With a description
 
     Scenario: Scenario 1

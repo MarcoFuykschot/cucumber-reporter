@@ -1,4 +1,4 @@
-Feature: feature with rules
+Feature: rules
 
     Rule: rule 1
         Description of a rule

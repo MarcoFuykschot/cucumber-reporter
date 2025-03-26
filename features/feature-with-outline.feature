@@ -1,4 +1,4 @@
-Feature: documentation with outline
+Feature: outline
 
     Scenario Outline: Scenario Outline name <test>
         Given a fact with '<Header1>'
