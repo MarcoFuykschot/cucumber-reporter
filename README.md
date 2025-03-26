@@ -37,7 +37,7 @@ Feature: simple
 ```
 <!--CONTENT-END:features/simple-feature.feature-->
 
-Will produce the following [html output]()
+Will produce the following [html output](assets/simple.html)
 
 ### A gherkin feature using an outline
 
