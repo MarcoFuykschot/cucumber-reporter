@@ -37,7 +37,7 @@ Feature: simple
 ```
 <!--CONTENT-END:features/simple-feature.feature-->
 
-Will produce the following [html output](assets/simple.html)
+Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/simple.html)
 
 ### A gherkin feature using an outline
 
@@ -67,7 +67,7 @@ Feature: outline
 ```
 <!--CONTENT-END:features/feature-with-outline.feature-->
 
-Will produce the following output
+Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/outline.html)
 
 
 ## planned 
