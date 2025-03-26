@@ -1,0 +1,326 @@
+<html>
+
+<head>
+    <style>
+        .title { 
+            color: #004080;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .desc {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        .results {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 2px 0;
+        }
+
+        .row {
+            border: 1px solid #ddd;
+            padding: 2px;
+            text-align: left;
+        }
+
+        .heading {
+            background-color: #f2f2f2;
+        }
+
+        .Failed {
+            color: firebrick
+        }
+
+        .Passed {
+            color: darkgreen
+        }
+
+        .NotRun {
+            color: dimgray;
+            font-style: italic;
+        }
+
+        .bg_Failed {
+            background: rgb(255, 255, 255);
+            background: radial-gradient(circle, rgba(255, 255, 255, 1) 75%, rgba(255, 0, 0, 1) 100%);
+            font-weight: bolder;
+        }
+
+        .bg_Passed {
+            color: darkgreen
+        }
+
+        .bg_NotRun {
+            color: dimgray;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+    <h1 class="title">documentation with outline</h1>
+    <p class="desc"></p>
+    
+    <h3 class="title">Scenario Outline name &lt;test&gt;</h3>
+<p class="desc"></p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row">
+            <td>
+                Given a fact with &#x27;&lt;Header1&gt;&#x27;
+            </td>
+        </tr>
+        <tr class="row">
+            <td>
+                Given a fact with &#x27;&lt;Header2&gt;&#x27;
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>Example </h4>
+<p></p>
+<table class="results">
+    <thead>
+        <th class="row heading">
+            Header1
+        </th>
+        <th class="row heading">
+            Header2
+        </th>
+        <th class="row heading">
+            test
+        </th>
+        <th class="row heading">
+            Outcome
+        </th>
+    </thead>
+    <tbody>
+        <tr class="row bg_Passed">
+            <td style="text-align: center">Value 1</td>
+            <td style="text-align: center">Value 1</td>
+            <td style="text-align: center">1</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 1&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 1&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+        <tr class="row bg_Failed">
+            <td style="text-align: center">Value 2</td>
+            <td style="text-align: center">Value 2</td>
+            <td style="text-align: center">2</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Failed" >
+                            <td>
+                                Given a fact with &#x27;Value 2&#x27;
+                            </td>
+                            <td>
+                                Failed
+                            </td>
+                        </tr>
+                        <tr class="row NotRun" >
+                            <td>
+                                Given a fact with &#x27;Value 2&#x27;
+                            </td>
+                            <td>
+                                NotRun
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+        <tr class="row bg_Passed">
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">3</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 3&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 3&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+        <tr class="row bg_Passed">
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">4</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 4&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 4&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+    </tbody>
+</table>
+<h3 class="title">Scenario with skipped</h3>
+<p class="desc"></p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row">
+            <td>
+                Given a skipped fact with &#x27;&lt;Header1&gt;&#x27;
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>Example </h4>
+<p></p>
+<table class="results">
+    <thead>
+        <th class="row heading">
+            Header1
+        </th>
+        <th class="row heading">
+            Header2
+        </th>
+        <th class="row heading">
+            test
+        </th>
+        <th class="row heading">
+            Outcome
+        </th>
+    </thead>
+    <tbody>
+        <tr class="row bg_NotRun">
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">3</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row NotRun" >
+                            <td>
+                                Given a skipped fact with &#x27;Value 3&#x27;
+                            </td>
+                            <td>
+                                NotRun
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+        <tr class="row bg_NotRun">
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">4</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row NotRun" >
+                            <td>
+                                Given a skipped fact with &#x27;Value 4&#x27;
+                            </td>
+                            <td>
+                                NotRun
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+    </tbody>
+</table>
+
+</div>
+</body>
+
+</html>

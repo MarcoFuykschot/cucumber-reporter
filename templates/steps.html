@@ -1,13 +1,13 @@
-<table>
+<table class="results">
     <thead>
-        <tr>
+        <tr class="row heading">
             <th>Step</th>
             <th>Outcome</th>
         </tr>
     </thead>
     <tbody>
         {{#each steps }}
-        <tr class="{{step_state}}" >
+        <tr class="row {{step_state}}" >
             <td>
                 {{#if (eq step_type "And") }}
                 <span style="margin-left: 10px;"> {{step_type}} {{step_template}} </span>

@@ -1,0 +1,202 @@
+<html>
+
+<head>
+    <style>
+        .title { 
+            color: #004080;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .desc {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        .results {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 2px 0;
+        }
+
+        .row {
+            border: 1px solid #ddd;
+            padding: 2px;
+            text-align: left;
+        }
+
+        .heading {
+            background-color: #f2f2f2;
+        }
+
+        .Failed {
+            color: firebrick
+        }
+
+        .Passed {
+            color: darkgreen
+        }
+
+        .NotRun {
+            color: dimgray;
+            font-style: italic;
+        }
+
+        .bg_Failed {
+            background: rgb(255, 255, 255);
+            background: radial-gradient(circle, rgba(255, 255, 255, 1) 75%, rgba(255, 0, 0, 1) 100%);
+            font-weight: bolder;
+        }
+
+        .bg_Passed {
+            color: darkgreen
+        }
+
+        .bg_NotRun {
+            color: dimgray;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+    <h1 class="title">feature with rules</h1>
+    <p class="desc"></p>
+    <div>
+    <h2 class="title" >rule 1</h2>
+    <p class="description">Description of a rule</p>
+    <hr>
+    <h3 class="title">Scenario 1</h3>
+<p class="description"></p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+            <th>Outcome</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row Passed" >
+            <td>
+                Given a fact
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                When something is executed
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                Then the result is oke
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+    </tbody>
+</table><hr><h3 class="title">Scenario 2</h3>
+<p class="description">Description test scenario</p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+            <th>Outcome</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row Passed" >
+            <td>
+                Given a fact
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                <span style="margin-left: 10px;"> And a other fact </span>
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                When something is executed
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Failed" >
+            <td>
+                Then the result is failed
+            </td>
+            <td>
+                Failed
+            </td>
+        </tr>
+    </tbody>
+</table><hr>
+</div><div>
+    <h2 class="title" >rule 2</h2>
+    <p class="description"></p>
+    <hr>
+    <h3 class="title">Scenario 1</h3>
+<p class="description"></p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+            <th>Outcome</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row Passed" >
+            <td>
+                Given a fact
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                <span style="margin-left: 10px;"> And a other fact </span>
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                When something is executed
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Failed" >
+            <td>
+                Then the result is failed
+            </td>
+            <td>
+                Failed
+            </td>
+        </tr>
+    </tbody>
+</table><hr>
+</div>
+    
+</div>
+</body>
+
+</html>

@@ -1,14 +1,14 @@
-<h3>{{name}}</h3>
-<p>{{scenario_description}}</p>
-<table>
+<h3 class="title">{{name}}</h3>
+<p class="desc">{{scenario_description}}</p>
+<table class="results">
     <thead>
-        <tr>
+        <tr class="row heading">
             <th>Step</th>
         </tr>
     </thead>
     <tbody>
         {{#each steps }}
-        <tr>
+        <tr class="row">
             <td>
                 {{#if is_and }}
                 <span style="margin-left: 10px;"> {{step_type}} {{step_template}} </span>
@@ -24,20 +24,20 @@
 {{#each examples}}
 <h4>Example {{name}}</h4>
 <p>{{description}}</p>
-<table>
+<table class="results">
     <thead>
         {{#each headers}}
-        <th>
+        <th class="row heading">
             {{this}}
         </th>
         {{/each}}
-        <th>
+        <th class="row heading">
             Outcome
         </th>
     </thead>
     <tbody>
         {{#each rows}}
-        <tr class="bg_{{example_state}}">
+        <tr class="row bg_{{example_state}}">
             {{#each example}}
             <td style="text-align: center">{{this}}</td>
             {{/each}}

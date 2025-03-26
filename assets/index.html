@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #004080;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        p {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 2px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 2px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+      </style>
+</head>
+
+<body>
+    <table>
+        <thead>
+            <th>Feature</th>
+            <th>Rules</th>
+            <th>Scenarios</th>
+            <th>Steps</th>
+            <th>Errors</th>
+            <th>Skipped</th>
+        </thead>
+        <tbody>
+            <tr onclick="javascript:window.location.assign('Simple feature.html')">
+               <td>Simple feature</td>
+               <td>0</td>
+               <td>3</td>
+               <td>9</td>
+               <td>1</td>
+               <td>0</td>
+            </tr>
+            <tr style="background-color: rgb(201, 201, 201);">
+                <td colspan="6">With a description</td>
+            </tr>
+            <tr onclick="javascript:window.location.assign('documentation with outline.html')">
+               <td>documentation with outline</td>
+               <td>0</td>
+               <td>6</td>
+               <td>10</td>
+               <td>1</td>
+               <td>0</td>
+            </tr>
+            <tr onclick="javascript:window.location.assign('feature with rules.html')">
+               <td>feature with rules</td>
+               <td>2</td>
+               <td>3</td>
+               <td>11</td>
+               <td>2</td>
+               <td>0</td>
+            </tr>
+        </tbody>
+    </table>
+<body>
+
+</html>
