@@ -31,6 +31,7 @@ pub(crate) struct StepRenderData {
     pub step_type: String,
     pub step_state: StepState,
     pub step_template: String,
+    pub step_table: Option<Vec<Vec<String>>>
 }
 
 /// Todo: gerkin languages
@@ -40,6 +41,7 @@ impl StepRenderData {
             step_type: step.keyword.trim().to_string(),
             step_template: step.value.clone(),
             step_state: state,
+            step_table: step.table.as_ref().map(|t| t.rows.clone())
         }
     }
 }

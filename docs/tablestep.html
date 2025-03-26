@@ -71,10 +71,10 @@
 
 <body>
     <div>
-    <h1 class="title">simple</h1>
-    <p class="desc">With a description</p>
+    <h1 class="title">tablestep</h1>
+    <p class="desc"></p>
     
-    <h3 class="title">Scenario 1</h3>
+    <h3 class="title">table steps</h3>
 <p class="description"></p>
 <table class="results">
     <thead>
@@ -94,88 +94,28 @@
         </tr>
         <tr class="row Passed" >
             <td>
-                When something is executed
+                Given some facts
+                <table class="datatable" style="margin-left: 10px;">
+                    <tr class="datarow">
+                         <td class="datacell">
+                            fact row 1 col 1
+                         </td>
+                         <td class="datacell">
+                            fact row 1 col 2
+                         </td>
+                    </tr>
+                    <tr class="datarow">
+                         <td class="datacell">
+                            fact row 2 col 1
+                         </td>
+                         <td class="datacell">
+                            fact row 2 col 2
+                         </td>
+                    </tr>
+                </table>
             </td>
             <td>
                 Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                Then the result is oke
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-    </tbody>
-</table><hr><h3 class="title">Scenario 2</h3>
-<p class="description"></p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-            <th>Outcome</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row Passed" >
-            <td>
-                Given a fact
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                <span style="margin-left: 10px;"> And a other fact </span>
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                When something is executed
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Failed" >
-            <td>
-                Then the result is failed
-            </td>
-            <td>
-                Failed
-            </td>
-        </tr>
-    </tbody>
-</table><hr><h3 class="title">Scenario 3</h3>
-<p class="description"></p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-            <th>Outcome</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row Passed" >
-            <td>
-                Given a fact
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row NotRun" >
-            <td>
-                Then a Skipped line
-            </td>
-            <td>
-                NotRun
             </td>
         </tr>
     </tbody>

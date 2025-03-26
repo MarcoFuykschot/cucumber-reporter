@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use cucumber::{World, given, then, when};
+use gherkin::Step;
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
@@ -10,6 +11,15 @@ pub struct ReporterWorld {}
 #[given(expr = "a fact")]
 #[given(expr = "a other fact")]
 pub async fn given_a_fact(_world: &mut ReporterWorld) {}
+
+#[given(expr = "some facts")]
+pub async fn given_some_fact(_world: &mut ReporterWorld,step:&Step) -> Result<()> {
+    if step.table().is_some() {
+        Ok(())
+    } else {
+        Err("no table".into())
+    }
+}
 
 #[given(expr = "a fact with {string}")]
 pub async fn given_a_fact_with(_world: &mut ReporterWorld, value: String) -> Result<()> {

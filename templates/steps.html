@@ -14,6 +14,19 @@
                 {{else}}
                 {{step_type}} {{step_template}}
                 {{/if}}
+                {{#if step_table }}
+                <table class="datatable" style="margin-left: 10px;">
+                   {{#each step_table }}
+                    <tr class="datarow">
+                       {{#each this }}
+                         <td class="datacell">
+                            {{this}}
+                         </td>
+                       {{/each}}
+                    </tr>
+                   {{/each}} 
+                </table>
+                {{/if}}
             </td>
             <td>
                 {{step_state}}

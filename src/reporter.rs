@@ -165,7 +165,18 @@ impl CucumberReporter {
                             .count()
                     })
                     .sum(),
-                nr_skipped: 0,
+                nr_skipped: all_scenarios
+                    .clone()
+                    .map(|s| {
+                        s.steps
+                            .iter()
+                            .filter(|st| {
+                                self.step_states
+                                    .get(&st.id())
+                                    .is_none_or(|ss| ss == &StepState::NotRun)
+                            })
+                            .count()
+                    }).sum()
             });
         }
         index_data.sort_by_key(|f|f.name.clone());

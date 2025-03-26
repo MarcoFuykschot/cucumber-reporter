@@ -15,7 +15,7 @@ are run.
 
 ### A simple gherkin feature file
 
-<!--CONTENT-START:features/simple-feature.feature:Feature-->
+<!--CONTENT-START:features/feature-simple.feature:Feature-->
 ```Feature
 Feature: simple
     With a description
@@ -35,7 +35,7 @@ Feature: simple
         Given a fact
         Then a Skipped line
 ```
-<!--CONTENT-END:features/simple-feature.feature-->
+<!--CONTENT-END:features/feature-simple.feature-->
 
 Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/simple.html)
 
@@ -74,3 +74,5 @@ Will produce the following [html output](https://marcofuykschot.github.io/cucumb
 
 * direct pdf output
 * custom templating  custom templating 
+* markdown in descriptions
+* doc strings 
