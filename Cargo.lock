@@ -454,7 +454,7 @@ dependencies = [
 
 [[package]]
 name = "cucumber-reporter"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "clap",
  "cucumber",
