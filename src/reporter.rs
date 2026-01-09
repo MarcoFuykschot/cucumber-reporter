@@ -257,7 +257,7 @@ impl CucumberReporter {
                 .expect("Original scenario not found")
                 .clone();
 
-            if let Some(org_scenario) = org_scenario.cloned() && self.outline_processed(&org_scenario) {
+            if self.outline_processed(&org_scenario) {
                 let example_ids = org_scenario
                     .examples
                     .iter()
@@ -308,7 +308,7 @@ impl CucumberReporter {
                 let scenario_html = templates.render("outline.html", &data)?;
                 Ok(scenario_html.to_string())
             } else {
-                Ok(format!("Cannot find exampled scenario with {:?} span",scenario.span))
+                Ok("".to_string())
             }
         } else {
             let data = ScenarioRenderData {
