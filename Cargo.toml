@@ -1,6 +1,6 @@
 [package]
 name = "cucumber-reporter"
-version = "0.2.13"
+version = "0.2.14"
 edition = "2024"
 exclude = [
     "target/*",
@@ -14,19 +14,21 @@ categories = ["development-tools::testing"]
 keywords = ["cucumber", "testing", "bdd", "reporting","html" ]
 
 [dependencies]
-clap = "4.5.32"
-cucumber = "0.21.1"
+clap = "4.5.54"
+cucumber = { version = "0.22.1", features = ["tracing"] }
 filenamify = "0.1.2"
-gherkin = { version = "0.14.0", features = ["serde"] }
+gherkin = { version = "0.15.0", features = ["serde"] }
 handlebars = { version = "6.3.1", features = ["rust-embed"] }
 rust-embed = { version = "8.6.0", features = ["tokio"] }
 serde = { version = "1.0.219", features = ["derive"] }
 tokio = { version = "1.44.1", features = ["full"] }
+tracing = "0.1.38"
+tracing-subscriber = { version = "0.3.22", features = ["fmt"] }
 
 [[test]]
 name="main"
 harness=false
 
 [build-dependencies]
-minify-html = "0.16.4"
+minify-html = "0.18.1"
 regex = "1.11.1"

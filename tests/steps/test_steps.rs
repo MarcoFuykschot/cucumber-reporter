@@ -24,7 +24,7 @@ pub async fn given_some_fact(_world: &mut ReporterWorld,step:&Step) -> Result<()
 #[given(expr = "a fact with {string}")]
 pub async fn given_a_fact_with(_world: &mut ReporterWorld, value: String) -> Result<()> {
     if value == "Value 2" {
-        Err("failed".into())
+        Err("expected failed".into())
     } else {
         Ok(())
     }
@@ -38,6 +38,6 @@ pub async fn then_result_is(_world: &mut ReporterWorld, outcome: String) -> Resu
     if outcome == "oke" {
         Ok(())
     } else {
-        Err("error".into())
+        Err("expected error".into())
     }
 }
