@@ -1,9 +1,9 @@
 ## Goal
 
 To create a reporter for the crate cucumber, that directly
-produces html files. 
+produces html files.
 
-for each execute feature an html file is produced using the 
+for each execute feature an html file is produced using the
 name of the feature. At the end an index file is produced
 with all executed features and some stats.
 
@@ -37,7 +37,7 @@ Feature: simple
 ```
 <!--CONTENT-END:features/feature-simple.feature-->
 
-Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/simple.html)
+Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/F216684217177122904.html)
 
 ### A gherkin feature using an outline
 
@@ -67,12 +67,12 @@ Feature: outline
 ```
 <!--CONTENT-END:features/feature-with-outline.feature-->
 
-Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/outline.html)
+Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/F13495275682151091117.html)
 
 
-## planned 
+## planned
 
 * direct pdf output
-* custom templating  custom templating 
+* custom templating  custom templating
 * markdown in descriptions
-* doc strings 
+* doc strings

@@ -1,3 +1,0 @@
-
-[alias]
-testhtml = "test --test main -- --output-html-path docs/"

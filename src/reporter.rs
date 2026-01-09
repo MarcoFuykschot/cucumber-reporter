@@ -5,16 +5,15 @@ use cucumber::{
     event::{self},
     writer::Normalized,
 };
-use filenamify::filenamify;
 use gherkin::{Examples, Feature, GherkinEnv, Scenario, Step};
 use handlebars::Handlebars;
 use rust_embed::Embed;
+use std::sync::Arc;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
     fmt::Debug,
     hash::{DefaultHasher, Hash, Hasher},
-    sync::Arc,
 };
 
 use crate::render_types::*;
@@ -27,10 +26,10 @@ struct HtmlTemplates;
 /// ```rust
 ///   use cucumber::{World, WriterExt, writer::Basic};
 ///   use cucumber_reporter::CucumberReporter;
-///  
+///
 ///   #[derive(World,Debug,Default)]
 ///   struct MyWorld;
-///  
+///
 ///   MyWorld::cucumber()
 ///        .with_default_cli()
 ///        .with_writer(
@@ -55,6 +54,16 @@ pub struct CucumberReporter {
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
+trait FeatureExt {
+    fn filename(&self) -> String;
+}
+
+impl FeatureExt for Feature {
+    fn filename(&self) -> String {
+        format!("F{}.html", self.name.id())
+    }
+}
+
 trait ToId: Hash {
     fn id(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
@@ -64,8 +73,20 @@ trait ToId: Hash {
 }
 
 impl ToId for Step {}
-impl ToId for Examples {}
-impl ToId for Scenario {}
+impl ToId for Examples {
+    fn id(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.span.hash(&mut hasher);
+        hasher.finish()
+    }
+}
+impl ToId for Scenario {
+    fn id(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.span.hash(&mut hasher);
+        hasher.finish()
+    }
+}
 impl ToId for String {}
 
 impl Default for CucumberReporter {
@@ -94,8 +115,11 @@ impl CucumberReporter {
             && self.features.insert(feature.clone())
             && feature.scenarios.iter().any(|s| !s.examples.is_empty())
         {
-            let org =
-                Feature::parse_path(feature.path.clone().unwrap(), GherkinEnv::default()).unwrap();
+            let org = Feature::parse_path(
+                feature.path.clone().expect("Feature not found"),
+                GherkinEnv::default(),
+            )
+            .expect("Failed to parse feature");
             self.orig_features.insert(Arc::new(org));
         }
     }
@@ -136,24 +160,26 @@ impl CucumberReporter {
                 rules: rules.join(""),
             };
             let feature_html = templates.render("feature.html", &data)?;
-            let html = templates.render("page.html", &feature_html).unwrap();
-            let filename = feature.name.clone();
-            write_html_file(args, html, filename)?;
+            let html = templates
+                .render("page.html", &feature_html)
+                .expect("Failed to render page.html");
+            write_html_file(args, html, feature.filename())?;
 
             let all_scenarios = feature
                 .scenarios
                 .iter()
-                .chain(feature.rules.iter().flat_map(|r| r.scenarios.iter()));
+                .chain(feature.rules.iter().flat_map(|r| r.scenarios.iter()))
+                .collect::<Vec<_>>();
 
             index_data.push(FeatureRenderStatsData {
                 name: feature.name.clone(),
-                link: format!("{}.html",filenamify(feature.name.clone())),
+                link: feature.filename(),
                 description: feature.description.clone().unwrap_or_default(),
-                nr_scenarios: all_scenarios.clone().count(),
+                nr_scenarios: all_scenarios.len(),
                 nr_rules: feature.rules.iter().count().into(),
-                nr_steps: all_scenarios.clone().map(|s| s.steps.iter().count()).sum(),
+                nr_steps: all_scenarios.iter().map(|s| s.steps.iter().count()).sum(),
                 nr_errors: all_scenarios
-                    .clone()
+                    .iter()
                     .map(|s| {
                         s.steps
                             .iter()
@@ -166,7 +192,7 @@ impl CucumberReporter {
                     })
                     .sum(),
                 nr_skipped: all_scenarios
-                    .clone()
+                    .iter()
                     .map(|s| {
                         s.steps
                             .iter()
@@ -176,15 +202,16 @@ impl CucumberReporter {
                                     .is_none_or(|ss| ss == &StepState::NotRun)
                             })
                             .count()
-                    }).sum()
+                    })
+                    .sum(),
             });
         }
-        index_data.sort_by_key(|f|f.name.clone());
+        index_data.sort_by_key(|f| f.name.clone());
         let data = IndexRenderData {
-            features: index_data.to_vec()
+            features: index_data.to_vec(),
         };
         let index_html = templates.render("index.html", &data)?;
-        write_html_file(args, index_html, "index".to_string())?;
+        write_html_file(args, index_html, "index.html".to_string())?;
         Ok(())
     }
 
@@ -221,16 +248,16 @@ impl CucumberReporter {
                 .orig_features
                 .iter()
                 .find(|f| f.name == feature.name)
-                .unwrap();
+                .expect("Original feature not found");
 
             let org_scenario = org_feature
                 .scenarios
                 .iter()
-                .find(|s| s.span == scenario.span)
-                .unwrap()
+                .find(|s| s.id() == scenario.id())
+                .expect("Original scenario not found")
                 .clone();
 
-            if self.outline_processed(&org_scenario) {
+            if let Some(org_scenario) = org_scenario.cloned() && self.outline_processed(&org_scenario) {
                 let example_ids = org_scenario
                     .examples
                     .iter()
@@ -251,7 +278,7 @@ impl CucumberReporter {
                 let data = OutlineRenderData {
                     name: org_scenario.name.clone(),
                     scenario_description: org_scenario.description.clone().unwrap_or_default(),
-                    examples: scenario
+                    examples: org_scenario
                         .examples
                         .iter()
                         .map(|ex| {
@@ -259,7 +286,7 @@ impl CucumberReporter {
                             ExampleRenderData {
                                 name: ex.name.clone().unwrap_or_default(),
                                 description: ex.description.clone().unwrap_or_default(),
-                                headers: table.rows.first().unwrap().clone(),
+                                headers: table.rows.first().expect("First row not found").clone(),
                                 rows: table
                                     .rows
                                     .iter()
@@ -281,7 +308,7 @@ impl CucumberReporter {
                 let scenario_html = templates.render("outline.html", &data)?;
                 Ok(scenario_html.to_string())
             } else {
-                Ok("".to_string())
+                Ok(format!("Cannot find exampled scenario with {:?} span",scenario.span))
             }
         } else {
             let data = ScenarioRenderData {
@@ -317,7 +344,7 @@ impl CucumberReporter {
         let scenario = all_scenarios
             .iter()
             .find(|s| s.position.line == scenario_id)
-            .unwrap();
+            .expect("Scenario not found");
         let steps = scenario
             .steps
             .iter()
@@ -354,11 +381,11 @@ impl CucumberReporter {
             self.nr_steps += 1;
             match event {
                 event::Step::Passed(_capture_locations, _location) => {
-                    self.add_step(gherkin_step, StepState::Passed);
+                    self.add_step(gherkin_step.into(), StepState::Passed);
                 }
                 event::Step::Failed(_capture_locations, _location, _world, _step_error) => {
                     self.nr_errors += 1;
-                    self.add_step(gherkin_step, StepState::Failed);
+                    self.add_step(gherkin_step.into(), StepState::Failed);
                 }
                 event::Step::Skipped => {
                     self.nr_skipped += 1;
@@ -373,12 +400,12 @@ impl CucumberReporter {
     }
 }
 
-fn write_html_file(args: &ReporterArgs, html: String, filename: String) -> Result<()>  {
+fn write_html_file(args: &ReporterArgs, html: String, filename: String) -> Result<()> {
     let filename = if let Some(path) = &args.output_html_path {
         std::fs::create_dir_all(path)?;
-        format!("{}/{}.html", path, filenamify::filenamify(filename))
+        format!("{}/{}", path, filename)
     } else {
-        format!("{}.html", filenamify::filenamify(filename))
+        format!("{}", filename)
     };
     std::fs::write(&filename, &html)?;
     Ok(())
@@ -406,7 +433,7 @@ where
         if let Ok(Event { value, .. }) = ev {
             match value {
                 Feature(gherkin_feature, event) => {
-                    self.add_feature(gherkin_feature);
+                    self.add_feature(gherkin_feature.into());
                     match event {
                         event::Feature::Rule(_rule, event) => {
                             self.nr_rules += 1;
@@ -419,7 +446,7 @@ where
                     }
                 }
                 cucumber::event::Cucumber::Finished => {
-                    self.finish(cli).await.unwrap();
+                    self.finish(cli).await.expect("Failed to finish reporter");
                 }
                 _ => {}
             }
