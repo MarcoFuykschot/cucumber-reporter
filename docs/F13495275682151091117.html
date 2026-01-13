@@ -329,6 +329,91 @@
         </tr>
     </tbody>
 </table>
+<h3 class="title">Scenario with skipped extra new line</h3>
+<p class="desc"></p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row">
+            <td>
+                Given a skipped fact with &#x27;&lt;Header1&gt;&#x27;
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>Example </h4>
+<p></p>
+<table class="results">
+    <thead>
+        <th class="row heading">
+            Header1
+        </th>
+        <th class="row heading">
+            Header2
+        </th>
+        <th class="row heading">
+            test
+        </th>
+        <th class="row heading">
+            Outcome
+        </th>
+    </thead>
+    <tbody>
+        <tr class="row bg_NotRun">
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">3</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row NotRun" >
+                            <td>
+                                Given a skipped fact with &#x27;Value 3&#x27;
+                            </td>
+                            <td>
+                                NotRun
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+        <tr class="row bg_NotRun">
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">4</td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row NotRun" >
+                            <td>
+                                Given a skipped fact with &#x27;Value 4&#x27;
+                            </td>
+                            <td>
+                                NotRun
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+    </tbody>
+</table>
 
 </div>
 </body>
