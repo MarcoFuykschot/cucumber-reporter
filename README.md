@@ -56,14 +56,26 @@ Feature: outline
             | Value 3 | Value 3 | 3    |
             | Value 4 | Value 4 | 4    |
 
-     Scenario Outline: Scenario with skipped
+    Scenario Outline: Scenario with skipped
         Given a skipped fact with '<Header1>'
 
         Examples:
             | Header1 | Header2 | test |
             | Value 3 | Value 3 | 3    |
             | Value 4 | Value 4 | 4    |
-   
+
+
+    Scenario Outline: Scenario with skipped extra new line
+        Given a skipped fact with '<Header1>'
+
+        Examples:
+
+            | Header1 | Header2 | test |
+
+            | Value 3 | Value 3 | 3 |
+
+            | Value 5 | Value 4 | 4 |
+
 ```
 <!--CONTENT-END:features/feature-with-outline.feature-->
 
@@ -75,4 +87,4 @@ Will produce the following [html output](https://marcofuykschot.github.io/cucumb
 * direct pdf output
 * custom templating  custom templating
 * markdown in descriptions
-* doc strings
+* doc stringsc strings
