@@ -46,7 +46,9 @@ Will produce the following [html output](https://marcofuykschot.github.io/cucumb
 Feature: outline
 
     Scenario Outline: Scenario Outline name <test>
+
         Given a fact with '<Header1>'
+
         Given a fact with '<Header2>'
 
         Examples:
@@ -87,4 +89,4 @@ Will produce the following [html output](https://marcofuykschot.github.io/cucumb
 * direct pdf output
 * custom templating  custom templating
 * markdown in descriptions
-* doc stringsc strings
+* doc stringsc stringsrings
