@@ -247,7 +247,7 @@ impl CucumberReporter {
             let org_feature = self
                 .orig_features
                 .iter()
-                .find(|f| f.name == feature.name)
+                .find(|f| f.name == feature.name && f.path == feature.path)
                 .expect("Original feature not found");
 
             let org_scenario = org_feature

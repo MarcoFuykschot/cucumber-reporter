@@ -1,0 +1,8 @@
+{
+"cucumberautocomplete.customParameters": [
+        {
+            "parameter":"expr = ",
+            "value":"("
+        }
+    ],
+}
