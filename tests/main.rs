@@ -2,6 +2,7 @@ use cucumber::{World, WriterExt, writer::Basic};
 use cucumber_reporter::CucumberReporter;
 use steps::test_steps::ReporterWorld;
 use tracing::level_filters::LevelFilter;
+
 use tracing_subscriber::{
     Layer,
     fmt::format::{self, Format},

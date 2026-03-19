@@ -11,6 +11,15 @@ You can use the commandline option --output-html-path to change the output
 path of the html files, default it uses the current directory where the tests
 are run.
 
+## Parameters usage
+```
+Usage: cargo test -- <Options>
+
+Options:
+    --output-html-path <PATH>       The output path of the generated HTML files.
+    --template <PATH>               The location of the files for templating.
+```
+
 ## Examples
 
 ### A simple gherkin feature file
@@ -83,10 +92,21 @@ Feature: outline
 
 Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/F13495275682151091117.html)
 
+## Templating
+Currenlty templating functions by using html with basic css.
+For templating, the [handlebars](https://docs.rs/handlebars/latest/handlebars/) rust crate is used.
+For an example to use it. Refer to the default template in the `templates/` folder.
 
 ## planned
-
 * direct pdf output
-* custom templating  custom templating
 * markdown in descriptions
 * doc stringsc stringsrings
+
+## References
+
+#### Cucumber
+* [Cucumber-rs book](https://cucumber-rs.github.io/cucumber/current/)
+#### Templating  
+* [Handlebars](https://docs.rs/handlebars/latest/handlebars/) - crate used.
+* [Handlebarsjs](https://handlebarsjs.com/guide/) - better guide for templating.
+
