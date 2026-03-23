@@ -6,8 +6,9 @@ use cucumber::{
     writer::Normalized,
 };
 use gherkin::{Examples, Feature, GherkinEnv, Scenario, Step};
-use handlebars::Handlebars;
+use handlebars::{DirectorySourceOptionsBuilder, Handlebars};
 use rust_embed::Embed;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::{
     collections::{HashMap, HashSet},
@@ -130,7 +131,20 @@ impl CucumberReporter {
 
     async fn finish(&mut self, args: &ReporterArgs) -> Result<()> {
         let mut templates = Handlebars::new();
-        templates.register_embed_templates::<HtmlTemplates>()?;
+        if let Some(path) =  &args.template {
+            if path.exists(){
+                templates.register_templates_directory(path.to_str().unwrap(),
+                    DirectorySourceOptionsBuilder
+                        ::default()
+                        .tpl_extension("")
+                        .build()?
+                    ).expect("Templates could not be registered, please validate the configuration");
+            } else {
+                panic!("Given path: {:?} is invalid", path.to_str());
+            }
+        } else {
+            templates.register_embed_templates::<HtmlTemplates>()?;
+        }
 
         let mut index_data = Vec::new();
 
@@ -405,7 +419,7 @@ fn write_html_file(args: &ReporterArgs, html: String, filename: String) -> Resul
         std::fs::create_dir_all(path)?;
         format!("{}/{}", path, filename)
     } else {
-        format!("{}", filename)
+        filename.to_string()
     };
     std::fs::write(&filename, &html)?;
     Ok(())
@@ -413,8 +427,13 @@ fn write_html_file(args: &ReporterArgs, html: String, filename: String) -> Resul
 
 #[derive(Args)]
 pub struct ReporterArgs {
+    /// The output path of the generated HTML files.
     #[arg(long = "output-html-path")]
     pub output_html_path: Option<String>,
+
+    /// The location of the files for templating.
+    #[arg(long = "template-dir")]
+    pub template: Option<PathBuf>,
 }
 
 impl Normalized for CucumberReporter {}
