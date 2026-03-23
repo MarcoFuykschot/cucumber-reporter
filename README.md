@@ -12,7 +12,7 @@ path of the html files, default it uses the current directory where the tests
 are run.
 
 ## Parameters usage
-```
+```md
 Usage: cargo test -- <Options>
 
 Options:
