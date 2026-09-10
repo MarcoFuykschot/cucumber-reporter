@@ -55,13 +55,13 @@ pub struct CucumberReporter {
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
-trait FeatureExt {
-    fn filename(&self) -> String;
+pub(crate) trait FeatureExt {
+    fn html_filename(&self) -> String;
 }
 
 impl FeatureExt for Feature {
-    fn filename(&self) -> String {
-        format!("F{}.html", self.name.id())
+    fn html_filename(&self) -> String {
+        format!("F{}.html", self.path.clone().map_or(self.name.id(), |p|p.id()))
     }
 }
 
@@ -74,6 +74,7 @@ trait ToId: Hash {
 }
 
 impl ToId for Step {}
+impl ToId for Feature {}
 impl ToId for Examples {
     fn id(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
@@ -89,6 +90,7 @@ impl ToId for Scenario {
     }
 }
 impl ToId for String {}
+impl ToId for PathBuf {}
 
 impl Default for CucumberReporter {
     fn default() -> Self {
@@ -129,7 +131,7 @@ impl CucumberReporter {
         self.step_states.insert(step.id(), state);
     }
 
-    async fn finish(&mut self, args: &ReporterArgs) -> Result<()> {
+    fn finish(&mut self, args: &ReporterArgs) -> Result<()> {
         let mut templates = Handlebars::new();
         if let Some(path) =  &args.template {
             if path.exists(){
@@ -153,16 +155,14 @@ impl CucumberReporter {
             let mut scenarios = Vec::new();
             for scenario in &feature.scenarios {
                 let scenario_html = self
-                    .scenario_render(&templates, feature.clone(), scenario)
-                    .await?
+                    .scenario_render(&templates, feature.clone(), scenario)?
                     .clone();
                 scenarios.push(scenario_html.to_string());
             }
             let mut rules = Vec::new();
             for rule in &feature.rules {
                 let rules_html = self
-                    .render_rule(&templates, feature.clone(), rule)
-                    .await?
+                    .render_rule(&templates, feature.clone(), rule)?
                     .clone();
                 rules.push(rules_html.to_string());
             }
@@ -177,7 +177,7 @@ impl CucumberReporter {
             let html = templates
                 .render("page.html", &feature_html)
                 .expect("Failed to render page.html");
-            write_html_file(args, html, feature.filename())?;
+            write_html_file(args, html, feature.html_filename())?;
 
             let all_scenarios = feature
                 .scenarios
@@ -187,11 +187,11 @@ impl CucumberReporter {
 
             index_data.push(FeatureRenderStatsData {
                 name: feature.name.clone(),
-                link: feature.filename(),
+                link: feature.html_filename(),
                 description: feature.description.clone().unwrap_or_default(),
                 nr_scenarios: all_scenarios.len(),
-                nr_rules: feature.rules.iter().count().into(),
-                nr_steps: all_scenarios.iter().map(|s| s.steps.iter().count()).sum(),
+                nr_rules: feature.rules.len(),
+                nr_steps: all_scenarios.iter().map(|s| s.steps.len()).sum(),
                 nr_errors: all_scenarios
                     .iter()
                     .map(|s| {
@@ -229,7 +229,7 @@ impl CucumberReporter {
         Ok(())
     }
 
-    async fn render_rule(
+    fn render_rule(
         &mut self,
         templates: &Handlebars<'_>,
         feature: Arc<Feature>,
@@ -238,8 +238,7 @@ impl CucumberReporter {
         let mut scenarios = Vec::new();
         for scenario in &rule.scenarios {
             let scenario_html = self
-                .scenario_render(templates, feature.clone(), scenario)
-                .await?;
+                .scenario_render(templates, feature.clone(), scenario)?;
             scenarios.push(scenario_html);
         }
         let data = RuleRenderData {
@@ -251,7 +250,7 @@ impl CucumberReporter {
         Ok(rules_html)
     }
 
-    async fn scenario_render(
+    fn scenario_render(
         &mut self,
         templates: &Handlebars<'_>,
         feature: Arc<Feature>,
@@ -352,7 +351,7 @@ impl CucumberReporter {
         all_scenarios: &Vec<&Scenario>,
         ex: &Examples,
         id: usize,
-        row: &Vec<String>,
+        row: &[String],
     ) -> ExampleRowRenderData {
         let scenario_id = ex.position.line + 2 + id;
         let scenario = all_scenarios
@@ -383,7 +382,7 @@ impl CucumberReporter {
             _ => todo!(),
         };
         ExampleRowRenderData {
-            example: row.clone(),
+            example: row.to_vec(),
             steps,
             example_state,
         }
@@ -465,7 +464,7 @@ where
                     }
                 }
                 cucumber::event::Cucumber::Finished => {
-                    self.finish(cli).await.expect("Failed to finish reporter");
+                    self.finish(cli).expect("Failed to finish reporter");
                 }
                 _ => {}
             }
