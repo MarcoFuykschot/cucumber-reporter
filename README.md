@@ -46,7 +46,7 @@ Feature: simple
 ```
 <!--CONTENT-END:features/feature-simple.feature-->
 
-Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/F216684217177122904.html)
+Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/F13421587706030853887.html)
 
 ### A gherkin feature using an outline
 
@@ -90,7 +90,7 @@ Feature: outline
 ```
 <!--CONTENT-END:features/feature-with-outline.feature-->
 
-Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/F13495275682151091117.html)
+Will produce the following [html output](https://marcofuykschot.github.io/cucumber-reporter/F14974020654905966167.html)
 
 ## Templating
 Currenlty templating functions by using html with basic css.
@@ -106,7 +106,8 @@ For an example to use it. Refer to the default template in the `templates/` fold
 
 #### Cucumber
 * [Cucumber-rs book](https://cucumber-rs.github.io/cucumber/current/)
-#### Templating  
+#### Templating
 * [Handlebars](https://docs.rs/handlebars/latest/handlebars/) - crate used.
 * [Handlebarsjs](https://handlebarsjs.com/guide/) - better guide for templating.
+* [Typst]
 

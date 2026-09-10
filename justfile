@@ -5,6 +5,7 @@ build:
 
 test:
     cargo test --test main -- --output-html-path docs/
+    cargo run --release --bin report-generator -- --spec-base-path . --json-results-path target/results.json --output-path docs/
 
 docs:
     cargo doc --no-deps --document-private-items

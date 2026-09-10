@@ -1,4 +1,4 @@
-use cucumber::{World, WriterExt, writer::Basic};
+use cucumber::{World, WriterExt, writer::{self, Basic}};
 use cucumber_reporter::CucumberReporter;
 use steps::test_steps::ReporterWorld;
 use tracing::level_filters::LevelFilter;
@@ -13,6 +13,9 @@ mod steps;
 
 #[tokio::main]
 async fn main() {
+
+    let file = std::fs::File::options().create(true).truncate(true).write(true).open("target/results.json").unwrap();
+
     ReporterWorld::cucumber()
         .with_default_cli()
         .configure_and_init_tracing(
@@ -23,7 +26,9 @@ async fn main() {
         .with_writer(
             Basic::stdout()
                 .summarized()
-                .tee::<ReporterWorld, _>(CucumberReporter::new()),
+                .tee::<ReporterWorld, _>(CucumberReporter::new())
+                .tee::<ReporterWorld,_>(writer::Json::for_tee(file))
+                .normalized(),
         )
         .run("features")
         .await;

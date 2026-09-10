@@ -55,13 +55,13 @@ pub struct CucumberReporter {
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
-trait FeatureExt {
-    fn filename(&self) -> String;
+pub(crate) trait FeatureExt {
+    fn html_filename(&self) -> String;
 }
 
 impl FeatureExt for Feature {
-    fn filename(&self) -> String {
-        format!("F{}.html", self.name.id())
+    fn html_filename(&self) -> String {
+        format!("F{}.html", self.path.clone().map_or(self.name.id(), |p|p.id()))
     }
 }
 
@@ -74,6 +74,7 @@ trait ToId: Hash {
 }
 
 impl ToId for Step {}
+impl ToId for Feature {}
 impl ToId for Examples {
     fn id(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
@@ -89,6 +90,7 @@ impl ToId for Scenario {
     }
 }
 impl ToId for String {}
+impl ToId for PathBuf {}
 
 impl Default for CucumberReporter {
     fn default() -> Self {
@@ -177,7 +179,7 @@ impl CucumberReporter {
             let html = templates
                 .render("page.html", &feature_html)
                 .expect("Failed to render page.html");
-            write_html_file(args, html, feature.filename())?;
+            write_html_file(args, html, feature.html_filename())?;
 
             let all_scenarios = feature
                 .scenarios
@@ -187,7 +189,7 @@ impl CucumberReporter {
 
             index_data.push(FeatureRenderStatsData {
                 name: feature.name.clone(),
-                link: feature.filename(),
+                link: feature.html_filename(),
                 description: feature.description.clone().unwrap_or_default(),
                 nr_scenarios: all_scenarios.len(),
                 nr_rules: feature.rules.iter().count().into(),
