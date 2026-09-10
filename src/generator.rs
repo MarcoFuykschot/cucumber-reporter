@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
+use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Local, TimeZone, Timelike, Utc};
-use gherkin::{Background, Examples, Table};
+use gherkin::{Background,Table};
 use rust_embed::RustEmbed;
 use tracing::{debug, info};
 use typst::{
@@ -18,6 +19,7 @@ use typst::{
 
 use crate::generator::cucumber_json::ElementType;
 #[allow(dead_code)]
+#[allow(clippy::all, warnings)]
 mod cucumber_json {
     include!(concat!(env!("OUT_DIR"), "/cucumber_json.rs"));
 }
@@ -163,10 +165,10 @@ impl GherkinToDict for FeatureInfo {
                 .clone()
                 .map_or(Value::None, |d| Value::Str(d.into())),
         );
-        if self.feature.background.is_some() {
+        if let Some(background)= &self.feature.background {
             dict.insert(
                 "background".into(),
-                Value::Dict(self.feature.background.as_ref().unwrap().to_dict()),
+                Value::Dict(background.to_dict()),
             );
         } else {
             dict.insert("background".into(), Value::None);
@@ -254,7 +256,7 @@ impl ScenarioInfo {
         } else {
             self.results
                 .first()
-                .map_or(None, |e| e.steps.iter().find(|s| s.name == step.value))
+                .and_then(|e| e.steps.iter().find(|s| s.name == step.value))
                 .cloned()
         }
     }
@@ -280,7 +282,7 @@ impl GherkinToDict for ScenarioInfo {
             Value::Array(Array::from_iter(self.scenario.steps.iter().map(|s| {
                 StepInfo {
                     step: s.clone(),
-                    result: self.get_result_for_step(&s),
+                    result: self.get_result_for_step(s),
                 }
                 .to_dict()
                 .into_value()
@@ -329,7 +331,7 @@ impl GherkinToDict for ExampleInfo {
             let mut headers = table.rows.first().expect("At least one row").clone();
             headers.push("Outcome".into());
 
-            let mut rows = vec![headers.clone()];
+            let rows = [headers.clone()];
 
             debug!("{:#?}", self.example);
             debug!("{:#?}", self.result);
@@ -415,7 +417,7 @@ impl ReportGenerator {
         spec_base_path: &str,
         json_results_file: &PathBuf,
         output_path: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> anyhow::Result<()> {
         // Load the JSON results
         let file = std::fs::File::open(json_results_file)?;
         let reader = std::io::BufReader::new(file);
@@ -441,9 +443,7 @@ impl ReportGenerator {
                 }
                 Err(e) => {
                     eprintln!(
-                        "Error parsing feature file {:?}: {:?}",
-                        feature_file_path, e
-                    );
+                        "Error parsing feature file {feature_file_path:?}: {e}");
                     continue;
                 }
             };
@@ -461,7 +461,7 @@ impl ReportGenerator {
 
         for template_path in template_paths {
             let template = TypstTemplates::get(&template_path)
-                .ok_or_else(|| format!("Embedded Typst template not found: {template_path}"))?;
+                .ok_or_else(|| anyhow!("Embedded Typst template not found: {template_path}"))?;
             let content = String::from_utf8(template.data.into_owned())?;
             let virtual_path = VirtualPath::new(&template_path)?;
             let template_id = RootedPath::new(VirtualRoot::Project, virtual_path).intern();
@@ -475,12 +475,12 @@ impl ReportGenerator {
         }
         match compile_pdf.output {
             Ok(doc) => {
-                let output_file_path = PathBuf::from(output_path).join(format!("report.pdf",));
+                let output_file_path = PathBuf::from(output_path).join("report.pdf");
                 if let Ok(pdf_bytes) = typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default()) {
                     std::fs::write(output_file_path, pdf_bytes)?;
                 } else {
                     eprintln!("Error generating PDF");
-                };
+                }
             }
             Err(e) => {
                 eprint!("Error compiling Typst template ");

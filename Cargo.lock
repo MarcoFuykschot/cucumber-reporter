@@ -794,6 +794,7 @@ dependencies = [
 name = "cucumber-reporter"
 version = "0.3.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "clap",
  "cucumber",
