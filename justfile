@@ -1,4 +1,4 @@
-all: build test docs
+all: build test check docs
 
 build:
     cargo build --release
@@ -6,6 +6,9 @@ build:
 test:
     cargo test --test main -- --output-html-path docs/
     cargo run --release --bin report-generator -- --spec-base-path . --json-results-path target/results.json --output-path docs/
+
+install-tools:
+    echo "no tools"
 
 check:
     cargo clippy --all-targets --all-features -- -D warnings

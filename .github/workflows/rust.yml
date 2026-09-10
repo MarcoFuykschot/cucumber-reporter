@@ -19,7 +19,7 @@ jobs:
     - name: install tools
       run: |
         cargo install just
-        just install tools
+        just install-tools
     - name: Run tests
       run: just test
     - name: Run clippy
