@@ -1,5 +1,6 @@
 
 #import "scenario.typ": *
+#import "styles.typ": *
 
 #let render_outline(scenario) = {
 
@@ -16,7 +17,10 @@
       === Examples
       #table(
         columns: example.columns,
-        ..example.rows.map(row => row.map(cell => [#cell])).flatten()
+        ..example.rows.map(row => row.map(cell =>  {
+           outcome(cell)
+          }
+          )).flatten()
       )
     ]
   ]

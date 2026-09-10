@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Local, TimeZone, Timelike, Utc};
-use gherkin::{Background,Table};
+use gherkin::{Background, Table};
 use rust_embed::RustEmbed;
 use tracing::{debug, info};
 use typst::{
@@ -11,6 +11,7 @@ use typst::{
     foundations::{
         Array, Bytes, Datetime, Dict, Duration, IntoValue,
         Value::{self},
+        dict,
     },
     syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot},
     text::{Font, FontBook},
@@ -156,28 +157,6 @@ impl FeatureInfo {
 
 impl GherkinToDict for FeatureInfo {
     fn to_dict(&self) -> Dict {
-        let mut dict = Dict::new();
-        dict.insert("name".into(), Value::Str(self.feature.name.clone().into()));
-        dict.insert(
-            "description".into(),
-            self.feature
-                .description
-                .clone()
-                .map_or(Value::None, |d| Value::Str(d.into())),
-        );
-        if let Some(background)= &self.feature.background {
-            dict.insert(
-                "background".into(),
-                Value::Dict(background.to_dict()),
-            );
-        } else {
-            dict.insert("background".into(), Value::None);
-        }
-        dict.insert(
-            "outcome".into(),
-            Value::Str(format!("{:?}", self.outcome()).into()),
-        );
-
         let scenarios_dict = Array::from_iter(self.feature.scenarios.iter().map(|info| {
             let scenario_info = ScenarioInfo {
                 scenario: info.clone(),
@@ -197,33 +176,31 @@ impl GherkinToDict for FeatureInfo {
             };
             scenario_info.to_dict().into_value()
         }));
-        dict.insert("scenarios".into(), Value::Array(scenarios_dict));
-        dict
+
+        dict! {
+            "name" => self.feature.name.clone(),
+            "description" => self.feature.description.clone(),
+            "background" => self.feature.background.as_ref().map(|background| background.to_dict()),
+            "outcome" => format!("{:?}", self.outcome()),
+            "scenarios" => scenarios_dict,
+        }
     }
 }
 
 impl GherkinToDict for Background {
     fn to_dict(&self) -> Dict {
-        let mut dict = Dict::new();
-        dict.insert("name".into(), Value::Str(self.name.clone().into()));
-        dict.insert(
-            "description".into(),
-            self.description
-                .clone()
-                .map_or(Value::None, |d| Value::Str(d.into())),
-        );
-        dict.insert(
-            "steps".into(),
-            Value::Array(Array::from_iter(self.steps.iter().map(|s| {
+        dict! {
+            "name" => self.name.clone(),
+            "description" => self.description.clone(),
+            "steps" => Array::from_iter(self.steps.iter().map(|s| {
                 StepInfo {
                     step: s.clone(),
                     result: None,
                 }
                 .to_dict()
                 .into_value()
-            }))),
-        );
-        dict
+            })),
+        }
     }
 }
 
@@ -240,9 +217,12 @@ impl ScenarioInfo {
         if self.is_outline() {
             self.scenario.examples.iter().any(|examples| {
                 examples.table.as_ref().is_some_and(|table| {
-                    table.rows.iter().skip(1).enumerate().any(|(row, _)| {
-                        (examples.position.line + 2 + row) as f64 == result.line
-                    })
+                    table
+                        .rows
+                        .iter()
+                        .skip(1)
+                        .enumerate()
+                        .any(|(row, _)| (examples.position.line + 2 + row) as f64 == result.line)
                 })
             })
         } else {
@@ -264,42 +244,27 @@ impl ScenarioInfo {
 
 impl GherkinToDict for ScenarioInfo {
     fn to_dict(&self) -> Dict {
-        let mut dict = Dict::new();
-        dict.insert("name".into(), Value::Str(self.scenario.name.clone().into()));
-        dict.insert(
-            "keyword".into(),
-            Value::Str(self.scenario.keyword.clone().into()),
-        );
-        dict.insert(
-            "description".into(),
-            self.scenario
-                .description
-                .clone()
-                .map_or(Value::None, |d| Value::Str(d.into())),
-        );
-        dict.insert(
-            "steps".into(),
-            Value::Array(Array::from_iter(self.scenario.steps.iter().map(|s| {
+        dict! {
+            "name" => self.scenario.name.clone(),
+            "keyword" => self.scenario.keyword.clone(),
+            "description" => self.scenario.description.clone(),
+            "steps" => Array::from_iter(self.scenario.steps.iter().map(|s| {
                 StepInfo {
                     step: s.clone(),
                     result: self.get_result_for_step(s),
                 }
                 .to_dict()
                 .into_value()
-            }))),
-        );
-        dict.insert(
-            "examples".into(),
-            Value::Array(Array::from_iter(self.scenario.examples.iter().map(|ex| {
+            })),
+            "examples" => Array::from_iter(self.scenario.examples.iter().map(|ex| {
                 ExampleInfo {
                     example: ex.clone(),
                     result: self.results.clone(),
                 }
                 .to_dict()
                 .into_value()
-            }))),
-        );
-        dict
+            })),
+        }
     }
 }
 
@@ -315,76 +280,81 @@ struct ExampleInfo {
 
 impl GherkinToDict for ExampleInfo {
     fn to_dict(&self) -> Dict {
-        let mut dict = Dict::new();
-        dict.insert(
-            "name".into(),
-            self.example
-                .name
-                .clone()
-                .map_or_default(|name| Value::Str(name.into())),
-        );
-
         if let Some(table) = &self.example.table {
             let colums = table.row_width();
-            dict.insert("columns".into(), (colums + 1).into_value());
 
             let mut headers = table.rows.first().expect("At least one row").clone();
             headers.push("Outcome".into());
 
-            let rows = [headers.clone()];
+            let rows =
+                std::iter::once(headers)
+                    .chain(table.rows.iter().enumerate().skip(1).map(|(index, row)| {
+                        let outcome =
+                            if let Some(result) = self.result.iter().find(|p| {
+                                p.line == (index as f64 + self.example.position.line as f64) +1.0
+                            }) {
+                                result.steps.iter().fold(
+                                    cucumber_json::Status::Passed,
+                                    |acc, step| match (acc, step.result.status) {
+                                        (cucumber_json::Status::Failed, _) => {
+                                            cucumber_json::Status::Failed
+                                        }
+                                        (_, cucumber_json::Status::Failed) => {
+                                            cucumber_json::Status::Failed
+                                        }
+                                        (cucumber_json::Status::Skipped, _) => {
+                                            cucumber_json::Status::Skipped
+                                        }
+                                        (_, cucumber_json::Status::Skipped) => {
+                                            cucumber_json::Status::Skipped
+                                        }
+                                        _ => cucumber_json::Status::Passed,
+                                    },
+                                )
+                            } else {
+                                cucumber_json::Status::Undefined
+                            };
+                        row.iter()
+                            .chain([outcome.to_string()].iter())
+                            .cloned()
+                            .collect::<Vec<_>>()
+                    }))
+                    .collect::<Vec<_>>();
 
-            debug!("{:#?}", self.example);
-            debug!("{:#?}", self.result);
-
-            dict.insert(
-                "rows".into(),
-                Value::Array(Array::from_iter(rows.iter().map(|row| {
-                    Array::from_iter(row.iter().map(|cell| Value::Str(cell.clone().into())))
-                        .into_value()
-                }))),
-            );
+            dict! {
+                "name" => self.example.name.clone(),
+                "columns" => colums + 1,
+                "rows" => Array::from_iter(rows.iter().map(|row| {
+                    Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
+                })),
+            }
         } else {
-            dict.insert("columns".into(), Value::None);
+            dict! {
+                "name" => self.example.name.clone(),
+                "columns" => Value::None,
+            }
         }
-
-        dict
     }
 }
 
 impl GherkinToDict for Table {
     fn to_dict(&self) -> Dict {
-        let mut dict = Dict::new();
-        dict.insert("columns".into(), self.row_width().into_value());
-
-        dict.insert(
-            "rows".into(),
-            Value::Array(Array::from_iter(self.rows.iter().map(|row| {
-                Array::from_iter(row.iter().map(|cell| Value::Str(cell.clone().into())))
-                    .into_value()
-            }))),
-        );
-
-        dict
+        dict! {
+            "columns" => self.row_width(),
+            "rows" => Array::from_iter(self.rows.iter().map(|row| {
+                Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
+            })),
+        }
     }
 }
 
 impl GherkinToDict for StepInfo {
     fn to_dict(&self) -> Dict {
-        let mut dict = Dict::new();
-        dict.insert(
-            "keyword".into(),
-            Value::Str(self.step.keyword.clone().into()),
-        );
-        dict.insert("text".into(), Value::Str(self.step.value.clone().into()));
-        dict.insert(
-            "outcome".into(),
-            if let Some(result) = &self.result {
-                Value::Str(format!("{:?}", result.result.status).into())
-            } else {
-                Value::None
-            },
-        );
-        dict
+        dict! {
+            "keyword" => self.step.keyword.clone(),
+            "text" => self.step.value.clone(),
+            "outcome" => self.result.as_ref().map(|result| result.result.status.to_string()),
+        }
     }
 }
 
@@ -442,8 +412,7 @@ impl ReportGenerator {
                     feature_info.to_dict().into_value()
                 }
                 Err(e) => {
-                    eprintln!(
-                        "Error parsing feature file {feature_file_path:?}: {e}");
+                    eprintln!("Error parsing feature file {feature_file_path:?}: {e}");
                     continue;
                 }
             };

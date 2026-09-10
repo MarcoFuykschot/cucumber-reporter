@@ -1,4 +1,6 @@
 
+#import "styles.typ": *
+
 #let step(steps) = {
   for step in steps [
     #{
@@ -14,12 +16,7 @@
       [#step.keyword]
     }
     #step.text
-    #{
-      show "Passed": outcome => text(fill: green, weight: "bold")[#outcome]
-      show "Failed": outcome => text(fill: red, weight: "bold")[#outcome]
-      show "Skipped": outcome => text(fill: gray, weight: "bold")[#outcome]
-      [#step.outcome]
-    } \
+    #outcome([#step.outcome]) \
   ]
 }
 
