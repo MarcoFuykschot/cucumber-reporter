@@ -4,7 +4,6 @@
 #import "scenario.typ": *
 
 #let feature(feature) = {
-
   let render(element) = {
     if element.keyword == "Scenario" {
       render_scenario(element)
@@ -24,6 +23,14 @@
       #feature.description
 
       Outcome: #feature.outcome
+
+      #for rule in feature.rules {
+        [== Rule: #rule.name
+          #for scenario in rule.scenarios [
+            #render(scenario)
+          ]
+        ]
+      }
 
       #if not feature.background == none [
         == Background

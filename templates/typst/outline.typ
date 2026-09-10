@@ -14,7 +14,7 @@
 
   [
     #for example in scenario.examples [
-      === Examples
+      #emph([Examples])
       #table(
         columns: example.columns,
         ..example.rows.map(row => row.map(cell =>  {

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Local, TimeZone, Timelike, Utc};
-use gherkin::{Background, Table};
+use gherkin::{Background, Rule, Table};
 use rust_embed::RustEmbed;
 use tracing::{debug, info};
 use typst::{
@@ -126,6 +126,7 @@ trait GherkinToDict {
     fn to_dict(&self) -> Dict;
 }
 
+#[derive(Debug,Clone)]
 struct FeatureInfo {
     pub feature: gherkin::Feature,
     pub results: cucumber_json::Feature,
@@ -153,28 +154,32 @@ impl FeatureInfo {
                 }
             })
     }
+
+    fn get_scenario_info(&self, info: &gherkin::Scenario) -> Value {
+        let scenario_info = ScenarioInfo {
+            scenario: info.clone(),
+            results: Vec::new(),
+        };
+        let results = self
+            .results
+            .elements
+            .iter()
+            .filter(|result| scenario_info.result_matches(result))
+            .cloned()
+            .collect();
+
+        let scenario_info = ScenarioInfo {
+            scenario: info.clone(),
+            results,
+        };
+        scenario_info.to_dict().into_value()
+    }
 }
 
 impl GherkinToDict for FeatureInfo {
     fn to_dict(&self) -> Dict {
         let scenarios_dict = Array::from_iter(self.feature.scenarios.iter().map(|info| {
-            let scenario_info = ScenarioInfo {
-                scenario: info.clone(),
-                results: Vec::new(),
-            };
-            let results = self
-                .results
-                .elements
-                .iter()
-                .filter(|result| scenario_info.result_matches(result))
-                .cloned()
-                .collect();
-
-            let scenario_info = ScenarioInfo {
-                scenario: info.clone(),
-                results,
-            };
-            scenario_info.to_dict().into_value()
+            self.get_scenario_info(info)
         }));
 
         dict! {
@@ -183,6 +188,23 @@ impl GherkinToDict for FeatureInfo {
             "background" => self.feature.background.as_ref().map(|background| background.to_dict()),
             "outcome" => format!("{:?}", self.outcome()),
             "scenarios" => scenarios_dict,
+            "path" => self.feature.path.clone().map_or(Value::None, |p| p.to_str().into_value()),
+            "rules" => Array::from_iter( self.feature.rules.iter().map(|r| RuleInfo { rule: r.clone() , feature: self.clone() }.to_dict().into_value()))
+        }
+    }
+}
+
+struct RuleInfo {
+    pub rule: Rule,
+    pub feature: FeatureInfo
+}
+
+impl GherkinToDict for RuleInfo {
+    fn to_dict(&self) -> Dict {
+        dict!{
+            "name" => self.rule.name.clone(),
+            "scenarios" => Array::from_iter(
+                self.rule.scenarios.iter().map(|s| self.feature.get_scenario_info(s)))
         }
     }
 }
