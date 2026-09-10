@@ -16,7 +16,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
+    - name: install tools
+      run: |
+        cargo install just
+        just install tools
     - name: Run tests
-      run: cargo test --verbose
+      run: just test
+    - name: Run clippy
+      run: just check
