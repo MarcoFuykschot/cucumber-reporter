@@ -29,10 +29,12 @@ tracing-subscriber = { version = "0.3.22", features = ["fmt"] }
 typst = "0.15.1"
 typst-pdf = "0.15.1"
 time = "0.3.55"
-chrono = "0.4.45"
+chrono = { version = "0.4.45", features = ["serde"] }
+flate2 = "1.0.35"
+tar = "0.4.43"
 y = "0.1.0"
 typst-layout = "0.15.1"
-typst-kit = { version = "0.15.1", features = ["embedded-fonts"] }
+typst-kit = { version = "0.15.1", features = ["embedded-fonts", "system-files", "system-downloader"] }
 typst-html = "0.15.1"
 anyhow = "1.0.104"
 

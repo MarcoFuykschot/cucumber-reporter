@@ -71,46 +71,11 @@
 
 <body>
     <div>
-    <h1 class="title">simple</h1>
-    <p class="desc">With a description</p>
+    <h1 class="title">background without rules</h1>
+    <p class="desc"></p>
     
-    <h3 class="title">Scenario 1</h3>
-<p class="description"></p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-            <th>Outcome</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row Passed" >
-            <td>
-                Given a fact
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                When something is executed
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                Then the result is oke
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-    </tbody>
-</table><hr><h3 class="title">Scenario 2</h3>
-<p class="description"></p>
+    <h3 class="title">Scenario 2</h3>
+<p class="description">Description test scenario</p>
 <table class="results">
     <thead>
         <tr class="row heading">
@@ -152,12 +117,8 @@
             </td>
         </tr>
     </tbody>
-</table><hr><h3 class="title">Scenario 3 with markdown</h3>
-<p class="description">test header 1
--------------------
-markdown test
-- test 1
-- test 2</p>
+</table><hr><h3 class="title">Scenario 1</h3>
+<p class="description"></p>
 <table class="results">
     <thead>
         <tr class="row heading">
@@ -174,12 +135,28 @@ markdown test
                 Passed
             </td>
         </tr>
-        <tr class="row NotRun" >
+        <tr class="row Passed" >
             <td>
-                Then a Skipped line
+                <span style="margin-left: 10px;"> And a other fact </span>
             </td>
             <td>
-                NotRun
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                When something is executed
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Failed" >
+            <td>
+                Then the result is failed
+            </td>
+            <td>
+                Failed
             </td>
         </tr>
     </tbody>

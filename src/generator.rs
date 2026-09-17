@@ -1,10 +1,12 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, io::Read, path::PathBuf};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Local, TimeZone, Timelike, Utc};
+use flate2::read::GzDecoder;
 use gherkin::{Background, Rule, Table};
 use rust_embed::RustEmbed;
-use tracing::{debug, info};
+use serde::{Deserialize, Serialize};
+use tracing::{debug, error, info};
 use typst::{
     Features, Library, LibraryExt, World,
     diag::{FileError, FileResult},
@@ -16,6 +18,11 @@ use typst::{
     syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot},
     text::{Font, FontBook},
     utils::LazyHash,
+};
+use typst_kit::{
+    downloader::SystemDownloader,
+    files::{FileLoader, FileStore, FsRoot},
+    packages::SystemPackages,
 };
 
 use crate::generator::cucumber_json::ElementType;
@@ -34,6 +41,102 @@ pub struct ReportGenerator {
     fontbook: FontBook,
     sources: Vec<Source>,
     fonts: Vec<typst::text::Font>,
+    packages: FileStore<EmbeddedTypstPackages>,
+}
+
+#[derive(Default)]
+struct EmbeddedTypstPackages {
+    packages: HashMap<String, HashMap<String, Bytes>>,
+}
+
+impl EmbeddedTypstPackages {
+    fn new() -> Self {
+        let mut packages = HashMap::new();
+
+        for file in TypstTemplates::iter().filter(|path| path.ends_with(".tar.gz")) {
+            let Some(template) = TypstTemplates::get(&file) else {
+                continue;
+            };
+
+            let archive_name = file.rsplit('/').next().unwrap_or(&file);
+            let Some((namespace, package_name)) = archive_name
+                .strip_prefix('@')
+                .and_then(|name| name.split_once('-'))
+            else {
+                continue;
+            };
+            let package_name = package_name.strip_suffix(".tar.gz").unwrap_or(package_name);
+            let Some((name, version)) = package_name.rsplit_once('-') else {
+                continue;
+            };
+
+            let mut package_files = HashMap::new();
+            let mut archive = tar::Archive::new(GzDecoder::new(std::io::Cursor::new(
+                template.data.to_vec(),
+            )));
+
+            let Ok(entries) = archive.entries() else {
+                continue;
+            };
+
+            for entry in entries {
+                let Ok(mut entry) = entry else {
+                    continue;
+                };
+
+                let Ok(path) = entry.path() else {
+                    continue;
+                };
+                let path = path.to_string_lossy().replace('\\', "/");
+
+                if path.is_empty() || path.ends_with('/') || path == "." {
+                    continue;
+                }
+
+                let mut bytes = Vec::new();
+                if entry.read_to_end(&mut bytes).is_err() {
+                    continue;
+                }
+
+                debug!("Adding {}",path);
+                package_files.insert(path.trim_start_matches("./").to_string(), Bytes::new(bytes));
+            }
+            packages.insert(format!("@{namespace}/{name}:{version}"), package_files);
+        }
+
+        Self { packages }
+    }
+}
+
+impl FileLoader for EmbeddedTypstPackages {
+    fn load(&self, id: FileId) -> FileResult<Bytes> {
+        match id.root() {
+            VirtualRoot::Project => FsRoot::new(std::env::current_dir().unwrap_or_default())
+                .load(id.vpath()),
+            VirtualRoot::Package(spec) => {
+                let key = format!("@{}/{}:{}", spec.namespace, spec.name, spec.version);
+                if let Some(file) = self
+                    .packages
+                    .get(&key)
+                    .and_then(|files| files.get(id.vpath().get_without_slash()))
+                    .cloned()
+                {
+                    return Ok(file);
+                }
+
+                let packages = SystemPackages::new(SystemDownloader::new("cucumber-rs-reporter"));
+                packages
+                    .obtain(spec)
+                    .map(|root| root.load(id.vpath()))
+                    .map_err(|_| {
+                        FileError::NotFound(id.vpath().get_without_slash().to_string().into())
+                    })
+                    .and_then(|result| result.map_err(|_| {
+                        FileError::NotFound(id.vpath().get_without_slash().to_string().into())
+                    }))
+            }
+        }
+    }
 }
 
 impl ReportGenerator {
@@ -74,6 +177,9 @@ impl World for ReportGenerator {
                 debug!("Accessed source file with id {:?}: {:?}", id, source);
                 FileResult::Ok(source)
             }
+            None if matches!(id.vpath().extension(), Some("typ" | "toml")) => {
+                self.packages.source(id)
+            }
             None => FileResult::Err(FileError::NotFound(
                 "Source file not found".to_string().into(),
             )),
@@ -86,10 +192,16 @@ impl World for ReportGenerator {
     #[doc = " should also succeed. The [`Bytes`] can be cheaply created as a view into"]
     #[doc = " an existing [`Source`] through [`Bytes::from_string`]."]
     fn file(&self, id: FileId) -> FileResult<Bytes> {
-        self.source(id).map(|s| {
-            let s = s.text().to_string();
-            Bytes::from_string(s)
-        })
+        match self.source(id) {
+            FileResult::Ok(source) => FileResult::Ok(Bytes::from_string(source.text().to_string())),
+            FileResult::Err(FileError::NotFound(e)) => {
+                debug!("not found: {:?} for {:?}", e, id);
+                self.packages
+                    .file(id)
+                    .inspect_err(|e| error!("{:?}", e))
+            }
+            FileResult::Err(error) => FileResult::Err(error),
+        }
     }
 
     #[doc = " Try to access the font with the given index in the font book."]
@@ -126,7 +238,7 @@ trait GherkinToDict {
     fn to_dict(&self) -> Dict;
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 struct FeatureInfo {
     pub feature: gherkin::Feature,
     pub results: cucumber_json::Feature,
@@ -178,9 +290,12 @@ impl FeatureInfo {
 
 impl GherkinToDict for FeatureInfo {
     fn to_dict(&self) -> Dict {
-        let scenarios_dict = Array::from_iter(self.feature.scenarios.iter().map(|info| {
-            self.get_scenario_info(info)
-        }));
+        let scenarios_dict = Array::from_iter(
+            self.feature
+                .scenarios
+                .iter()
+                .map(|info| self.get_scenario_info(info)),
+        );
 
         dict! {
             "name" => self.feature.name.clone(),
@@ -196,12 +311,12 @@ impl GherkinToDict for FeatureInfo {
 
 struct RuleInfo {
     pub rule: Rule,
-    pub feature: FeatureInfo
+    pub feature: FeatureInfo,
 }
 
 impl GherkinToDict for RuleInfo {
     fn to_dict(&self) -> Dict {
-        dict!{
+        dict! {
             "name" => self.rule.name.clone(),
             "scenarios" => Array::from_iter(
                 self.rule.scenarios.iter().map(|s| self.feature.get_scenario_info(s)))
@@ -308,40 +423,40 @@ impl GherkinToDict for ExampleInfo {
             let mut headers = table.rows.first().expect("At least one row").clone();
             headers.push("Outcome".into());
 
-            let rows =
-                std::iter::once(headers)
-                    .chain(table.rows.iter().enumerate().skip(1).map(|(index, row)| {
-                        let outcome =
-                            if let Some(result) = self.result.iter().find(|p| {
-                                p.line == (index as f64 + self.example.position.line as f64) +1.0
-                            }) {
-                                result.steps.iter().fold(
-                                    cucumber_json::Status::Passed,
-                                    |acc, step| match (acc, step.result.status) {
-                                        (cucumber_json::Status::Failed, _) => {
-                                            cucumber_json::Status::Failed
-                                        }
-                                        (_, cucumber_json::Status::Failed) => {
-                                            cucumber_json::Status::Failed
-                                        }
-                                        (cucumber_json::Status::Skipped, _) => {
-                                            cucumber_json::Status::Skipped
-                                        }
-                                        (_, cucumber_json::Status::Skipped) => {
-                                            cucumber_json::Status::Skipped
-                                        }
-                                        _ => cucumber_json::Status::Passed,
-                                    },
-                                )
-                            } else {
-                                cucumber_json::Status::Undefined
-                            };
-                        row.iter()
-                            .chain([outcome.to_string()].iter())
-                            .cloned()
-                            .collect::<Vec<_>>()
-                    }))
-                    .collect::<Vec<_>>();
+            let rows = std::iter::once(headers)
+                .chain(table.rows.iter().enumerate().skip(1).map(|(index, row)| {
+                    let outcome = if let Some(result) = self.result.iter().find(|p| {
+                        p.line == (index as f64 + self.example.position.line as f64) + 1.0
+                    }) {
+                        result
+                            .steps
+                            .iter()
+                            .fold(cucumber_json::Status::Passed, |acc, step| {
+                                match (acc, step.result.status) {
+                                    (cucumber_json::Status::Failed, _) => {
+                                        cucumber_json::Status::Failed
+                                    }
+                                    (_, cucumber_json::Status::Failed) => {
+                                        cucumber_json::Status::Failed
+                                    }
+                                    (cucumber_json::Status::Skipped, _) => {
+                                        cucumber_json::Status::Skipped
+                                    }
+                                    (_, cucumber_json::Status::Skipped) => {
+                                        cucumber_json::Status::Skipped
+                                    }
+                                    _ => cucumber_json::Status::Passed,
+                                }
+                            })
+                    } else {
+                        cucumber_json::Status::Undefined
+                    };
+                    row.iter()
+                        .chain([outcome.to_string()].iter())
+                        .cloned()
+                        .collect::<Vec<_>>()
+                }))
+                .collect::<Vec<_>>();
 
             dict! {
                 "name" => self.example.name.clone(),
@@ -376,6 +491,39 @@ impl GherkinToDict for StepInfo {
             "keyword" => self.step.keyword.clone(),
             "text" => self.step.value.clone(),
             "outcome" => self.result.as_ref().map(|result| result.result.status.to_string()),
+            "table" => self.step.table.as_ref().map_or_else(||Value::None, |t| t.to_dict().into_value())
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReportInfo {
+    title: String,
+    author: String,
+    sub_title: Option<String>,
+    time_run: Option<DateTime<Utc>>,
+}
+
+impl Default for ReportInfo {
+    fn default() -> Self {
+        Self {
+            title: "Gherking reporter".to_string(),
+            author: std::env::var("USER")
+                .or_else(|_| std::env::var("USERNAME"))
+                .unwrap_or_else(|_| "Unknown".to_string()),
+            sub_title: Default::default(),
+            time_run: chrono::Local::now().to_utc().into(),
+        }
+    }
+}
+
+impl GherkinToDict for ReportInfo {
+    fn to_dict(&self) -> Dict {
+        dict! {
+            "title" => self.title.clone(),
+            "author" => self.author.clone(),
+            "sub_title" => self.sub_title.clone().map_or_else(|| Value::None, |s| s.clone().into_value()),
+            "time_run" => self.time_run.map_or_else(|| Value::None, |s| ReportGenerator::typst_datetime(  s.clone()).into_value() )
         }
     }
 }
@@ -402,6 +550,7 @@ impl ReportGenerator {
             fontbook: book,
             sources: Vec::new(),
             fonts,
+            packages: FileStore::new(EmbeddedTypstPackages::new()),
         }
     }
 
@@ -416,6 +565,12 @@ impl ReportGenerator {
         let features: Vec<cucumber_json::Feature> = serde_json::from_reader(reader)?;
 
         let mut inputs = Dict::new();
+
+        inputs.insert(
+            "titlepage".into(),
+            ReportInfo::default().to_dict().into_value(),
+        );
+
         let mut features_dict = Array::new();
         // Process each feature
         for feature in features {

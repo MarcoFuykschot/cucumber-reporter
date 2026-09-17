@@ -37,7 +37,9 @@
         #let background = feature.background
         #background.description
         #if background.steps.len() > 0 [
-          #step(background.steps)
+          #for step in background.steps [
+            #render_step(step)
+          ]
         ] else [
           #emph[No steps defined for the background.]
         ]

@@ -71,9 +71,12 @@
 
 <body>
     <div>
-    <h1 class="title">simple</h1>
-    <p class="desc">With a description</p>
-    
+    <h1 class="title">rules</h1>
+    <p class="desc"></p>
+    <div>
+    <h2 class="title" >rule 1</h2>
+    <p class="description">Description of a rule</p>
+    <hr>
     <h3 class="title">Scenario 1</h3>
 <p class="description"></p>
 <table class="results">
@@ -110,6 +113,54 @@
         </tr>
     </tbody>
 </table><hr><h3 class="title">Scenario 2</h3>
+<p class="description">Description test scenario</p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+            <th>Outcome</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row Passed" >
+            <td>
+                Given a fact
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                <span style="margin-left: 10px;"> And a other fact </span>
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Passed" >
+            <td>
+                When something is executed
+            </td>
+            <td>
+                Passed
+            </td>
+        </tr>
+        <tr class="row Failed" >
+            <td>
+                Then the result is failed
+            </td>
+            <td>
+                Failed
+            </td>
+        </tr>
+    </tbody>
+</table><hr>
+</div><div>
+    <h2 class="title" >rule 2</h2>
+    <p class="description"></p>
+    <hr>
+    <h3 class="title">Scenario 1</h3>
 <p class="description"></p>
 <table class="results">
     <thead>
@@ -152,38 +203,9 @@
             </td>
         </tr>
     </tbody>
-</table><hr><h3 class="title">Scenario 3 with markdown</h3>
-<p class="description">test header 1
--------------------
-markdown test
-- test 1
-- test 2</p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-            <th>Outcome</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row Passed" >
-            <td>
-                Given a fact
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row NotRun" >
-            <td>
-                Then a Skipped line
-            </td>
-            <td>
-                NotRun
-            </td>
-        </tr>
-    </tbody>
 </table><hr>
+</div>
+    
 </div>
 </body>
 

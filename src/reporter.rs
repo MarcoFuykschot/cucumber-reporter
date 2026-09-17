@@ -20,7 +20,7 @@ use std::{
 use crate::render_types::*;
 
 #[derive(Embed)]
-#[folder = "templates"]
+#[folder = "templates/html"]
 struct HtmlTemplates;
 
 ///  How to add to the default writer

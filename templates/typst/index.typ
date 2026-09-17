@@ -10,6 +10,22 @@
 
 #import "feature.typ": *
 
+#let titlepage = inputs.at("titlepage", default: {})
+
+#if titlepage != none {
+  set document(
+    title: [#titlepage.title],
+    author: titlepage.author,
+  )
+
+  align(center)[
+    #title([#titlepage.title])
+    #titlepage.author
+  ]
+
+  pagebreak()
+}
+
 #outline()
 #pagebreak()
 
