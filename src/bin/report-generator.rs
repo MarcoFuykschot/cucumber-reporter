@@ -2,8 +2,8 @@
 // includeing test results based on json cucumber format if present
 
 use clap::Parser;
-use cucumber_reporter::{ReportFormat, ReportGenerator};
-use tracing::{debug, error, info};
+use cucumber_reporter::{ReportFormat, ReportGenerator, ReportInfo};
+use tracing::{debug, info};
 
 #[derive(Debug, clap::Parser)]
 struct Args {
@@ -13,11 +13,14 @@ struct Args {
     /// Resuls be a glob pattern, for example: "target/**/*.json".
     #[clap(long)]
     json_results_path: Option<String>,
-    #[clap(long, default_value = ".")]
+    #[clap(long, default_value = "report.pdf")]
     output_document: String,
     /// The format of the generated report.
     #[clap(long, default_value = "pdf")]
     report_format: ReportFormat,
+    /// run information in yaml format
+    #[clap(long)]
+    run_information: Option<String>,
 }
 
 #[tokio::main]
@@ -49,6 +52,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     debug!(?json_results_files, "Found JSON results files");
 
+    let run_info = if let Some(run_info_path) = args.run_information {
+        let run_info_yaml = std::fs::read_to_string(run_info_path)?;
+        serde_yaml::from_str(&run_info_yaml)?
+    } else {
+        ReportInfo::default()
+    };
+
     ReportGenerator::generate_report(
         &spec_files,
         &if json_results_files.is_empty() {
@@ -58,8 +68,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         &args.output_document,
         args.report_format,
+        &run_info,
     )?;
-
 
     Ok(())
 }

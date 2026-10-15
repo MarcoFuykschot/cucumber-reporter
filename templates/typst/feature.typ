@@ -4,8 +4,8 @@
 #import "scenario.typ": *
 #import "styles.typ": *
 
-#let feature(feature) = {
-  let render(element) = {
+#let render_feature(feature, index: none) = {
+  let render_element(element) = {
     if element.keyword == "Scenario" {
       render_scenario(element)
     } else {
@@ -19,7 +19,17 @@
     #emph[Feature data is missing in the inputs.]
   ] else {
     [
-      = Feature: #feature.name #outcome(feature.outcome)
+      #grid(
+        columns: (auto, auto),
+        gutter: 0.5em,
+        align: (left, bottom),
+        [== #feature.name],
+        if feature.outcome != none [#outcome(feature.outcome)] else [],
+      )
+      #if index != none [
+        #let feature-id = "feature-" + str(index)
+        #label(feature-id)
+      ]
 
       #render_tags(feature.tags)
 
@@ -30,13 +40,13 @@
           #render_tags(rule.tags)
           #render_description(rule.description)
           #for scenario in rule.scenarios [
-            #render(scenario)
+            #render_element(scenario)
           ]
         ]
       }
 
       #if not feature.background == none [
-        == Background
+        === Background
         #let background = feature.background
         #background.description
         #if background.steps.len() > 0 [
@@ -49,9 +59,9 @@
       ]
 
       #if feature.scenarios.len() > 0 [
-        == Scenarios
+        === Scenarios
         #for scenario in feature.scenarios [
-          #render(scenario)
+          #render_element(scenario)
         ]
       ]
     ]

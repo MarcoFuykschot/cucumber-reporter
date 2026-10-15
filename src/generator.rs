@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::anyhow;
 use gherkin::{Background, Table};
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use typst::{
     foundations::{
         Array, Dict, IntoValue,
@@ -31,36 +31,13 @@ pub(crate) trait GherkinToDict {
     fn to_dict(&self) -> Dict;
 }
 
-impl GherkinToDict for Background {
-    fn to_dict(&self) -> Dict {
-        let description = if let Some(description) = &self.description {
-            description.replace("\n", "\r\n").into()
-        }
-        else {
-            None
-        };
-        dict! {
-            "name" => self.name.clone(),
-            "description" => description,
-            "steps" => Array::from_iter(self.steps.iter().map(|s| {
-                StepInfo {
-                    step: s.clone(),
-                    result: None,
-                }
-                .to_dict()
-                .into_value()
-            })),
-        }
-    }
-}
 
-impl GherkinToDict for Table {
-    fn to_dict(&self) -> Dict {
-        dict! {
-            "columns" => self.row_width(),
-            "rows" => Array::from_iter(self.rows.iter().map(|row| {
-                Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
-            })),
+fn feature_to_dict(spec_file: &Path, results: Option<cucumber_json::Feature>) -> Option<Value> {
+    match gherkin::Feature::parse_path(spec_file, gherkin::GherkinEnv::default()) {
+        Ok(feature) => Some(FeatureInfo { feature, results }.to_dict().into_value()),
+        Err(error) => {
+            eprintln!("Error parsing feature file {spec_file:?}: {error}");
+            None
         }
     }
 }
@@ -71,6 +48,7 @@ impl ReportGenerator {
         result_files: &Option<Vec<PathBuf>>,
         output_document: &str,
         report_format: ReportFormat,
+        run_info : &ReportInfo
     ) -> anyhow::Result<()> {
         let mut features_dict = Array::new();
         if let Some(results) = result_files {
@@ -90,21 +68,9 @@ impl ReportGenerator {
                         .find(|spec_file| spec_file.ends_with(&feature_path))
                     {
                         info!("Processing feature file: {:?}", spec_file);
-                        let env = gherkin::GherkinEnv::default();
-                        let feature_input = match gherkin::Feature::parse_path(&spec_file, env) {
-                            Ok(feature_parsed) => {
-                                let feature_info = FeatureInfo {
-                                    feature: feature_parsed,
-                                    results: feature.into(),
-                                };
-                                feature_info.to_dict().into_value()
-                            }
-                            Err(e) => {
-                                eprintln!("Error parsing feature file {spec_file:?}: {e}");
-                                continue;
-                            }
-                        };
-                        features_dict.push(feature_input);
+                        if let Some(feature_input) = feature_to_dict(spec_file, Some(feature)) {
+                            features_dict.push(feature_input);
+                        }
                     };
                 }
             }
@@ -113,30 +79,16 @@ impl ReportGenerator {
             for spec_file in spec_files {
                 info!("Processing feature file: {:?}", spec_file);
 
-                let env = gherkin::GherkinEnv::default();
-
-                let feature_input = match gherkin::Feature::parse_path(&spec_file, env) {
-                    Ok(feature_parsed) => {
-                        let feature_info = FeatureInfo {
-                            feature: feature_parsed,
-                            results: None,
-                        };
-                        feature_info.to_dict().into_value()
-                    }
-                    Err(e) => {
-                        eprintln!("Error parsing feature file {spec_file:?}: {e}");
-                        continue;
-                    }
-                };
-                features_dict.push(feature_input);
+                if let Some(feature_input) = feature_to_dict(spec_file, None) {
+                    features_dict.push(feature_input);
+                }
             }
         };
 
-        // Load the JSON results
         let mut inputs = Dict::new();
         inputs.insert(
-            "titlepage".into(),
-            ReportInfo::default().to_dict().into_value(),
+            "runinfo".into(),
+            run_info.to_dict().into_value(),
         );
 
         inputs.insert("features".into(), Value::Array(features_dict));
@@ -160,7 +112,7 @@ impl ReportGenerator {
         let compile_pdf = typst::compile(&typst_world);
 
         for warning in &compile_pdf.warnings {
-            debug!("Typst warning: {} ({:?})", warning.message, warning.span);
+            warn!("Typst warning: {} ({:?})", warning.message, warning.span);
         }
         match compile_pdf.output {
             Ok(doc) => {

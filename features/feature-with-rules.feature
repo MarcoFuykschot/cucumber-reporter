@@ -15,17 +15,17 @@ Feature: rules
             When something is executed
             Then the result is failed
 
+@Tag2
     Rule: rule 2
 
-Intro
------
+# Intro
 1. A
-2. B 
+2. B
 
-Markdown description of a rule
+## Markdown description of a rule
 - one
 	- sub item
-- two 
+- two
 
 | A | B |
 |---|---|

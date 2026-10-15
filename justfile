@@ -7,6 +7,7 @@ test:
     cargo test --test main -- --output-html-path docs/
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --json-results-path target/results.json --output-document docs/report_with_result.pdf
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_without.pdf
+    cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_withinfo.pdf --run-information features/reportinfo.yaml
 
 install-tools:
     echo "no tools"

@@ -31,7 +31,8 @@
 }
 
 #let render_scenario(scenario) = [
-  === Scenario: #scenario.name
+  ==== Scenario: #scenario.name
+
   #render_tags(scenario.tags)
 
   #render_description(scenario.description)

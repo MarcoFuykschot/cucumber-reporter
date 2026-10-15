@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use gherkin::{Background, Table};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use typst::foundations::{Array, Dict, IntoValue, Value, dict};
@@ -74,7 +75,7 @@ impl GherkinToDict for FeatureInfo {
             "name" => self.feature.name.clone(),
             "description" => self.feature.description.clone(),
             "background" => self.feature.background.as_ref().map(|background| background.to_dict()),
-            "outcome" => format!("{:?}", self.outcome()),
+            "outcome" => self.outcome().map_or_else(|| Value::None, |result | result.to_string().into_value()),
             "scenarios" => scenarios_dict,
             "path" => self.feature.path.clone().map_or(Value::None, |p| p.to_str().into_value()),
             "rules" => Array::from_iter( self.feature.rules.iter().map(|r| RuleInfo { rule: r.clone() , feature: self.clone() }.to_dict().into_value())),
@@ -268,6 +269,7 @@ impl GherkinToDict for ExampleInfo {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(default)]
 pub struct ReportInfo {
     pub(crate) title: String,
     pub(crate) author: String,
@@ -295,6 +297,40 @@ impl GherkinToDict for ReportInfo {
             "author" => self.author.clone(),
             "sub_title" => self.sub_title.clone().map_or_else(|| Value::None, |s| s.clone().into_value()),
             "time_run" => self.time_run.map_or_else(|| Value::None, |s| ReportGenerator::typst_datetime(  s.clone()).into_value() )
+        }
+    }
+}
+
+impl GherkinToDict for Background {
+    fn to_dict(&self) -> Dict {
+        let description = if let Some(description) = &self.description {
+            description.replace("\n", "\r\n").into()
+        }
+        else {
+            None
+        };
+        dict! {
+            "name" => self.name.clone(),
+            "description" => description,
+            "steps" => Array::from_iter(self.steps.iter().map(|s| {
+                StepInfo {
+                    step: s.clone(),
+                    result: None,
+                }
+                .to_dict()
+                .into_value()
+            })),
+        }
+    }
+}
+
+impl GherkinToDict for Table {
+    fn to_dict(&self) -> Dict {
+        dict! {
+            "columns" => self.row_width(),
+            "rows" => Array::from_iter(self.rows.iter().map(|row| {
+                Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
+            })),
         }
     }
 }
