@@ -1,18 +1,16 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::anyhow;
-use gherkin::{Background, Table};
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 use typst::{
     foundations::{
         Array, Dict, IntoValue,
         Value::{self},
-        dict,
     },
     syntax::{RootedPath, Source, VirtualPath, VirtualRoot},
 };
 
-use crate::info_types::{FeatureInfo, ReportInfo, StepInfo};
+use crate::info_types::{FeatureInfo, ReportInfo};
 use crate::typst_world::{ReportGenerator, TypstTemplates};
 
 #[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]

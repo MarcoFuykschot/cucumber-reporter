@@ -1,24 +1,59 @@
 ## Goal
 
-To create a reporter for the crate cucumber, that directly
-produces html files.
+This project generates a report from Gherkin feature files and optional Cucumber JSON execution results. The report can be exported as a PDF or, experimentally, as HTML.
 
-for each execute feature an html file is produced using the
-name of the feature. At the end an index file is produced
-with all executed features and some stats.
+The standalone report generator accepts a glob for feature files, optionally matches those files against JSON output from your test run, and combines the result with report metadata from a YAML file before rendering the final document.
 
-You can use the commandline option --output-html-path to change the output
-path of the html files, default it uses the current directory where the tests
-are run.
+## Standalone report generator
 
-## Parameters usage
-```md
-Usage: cargo test -- <Options>
+The CLI is available as the `report-generator` binary:
 
-Options:
-    --output-html-path <PATH>       The output path of the generated HTML files.
-    --template <PATH>               The location of the files for templating.
+```sh
+cargo run --bin report-generator -- \
+  --spec-path "features/**/*.feature" \
+  [--json-results-path "target/**/*.json"] \
+  [--run-information "features/reportinfo.yaml"] \
+  [--report-format pdf|html] \
+  --output-document "report.pdf"
 ```
+
+### Options
+
+- `--spec-path <GLOB>`: required glob for the feature files to include in the report.
+- `--json-results-path <GLOB>`: optional glob for Cucumber JSON result files. When present, each JSON feature is matched back to its corresponding feature file and merged into the final report.
+- `--run-information <PATH>`: optional YAML file containing run metadata such as title, author, subtitle and timestamp.
+- `--report-format <pdf|html>`: output format. `pdf` is the default and stable option. `html` is experimental and may differ from the PDF output.
+- `--output-document <PATH>`: destination file for the generated report.
+
+### Run metadata example
+
+```yaml
+title: "A report on features"
+author: "By someone"
+sub_title: "Subtile is a nice title"
+time_run: "2026-10-15T15:15:15Z"
+```
+
+### Example: PDF report with Cucumber JSON results
+
+```sh
+cargo run --bin report-generator -- \
+  --spec-path "features/**/*.feature" \
+  --json-results-path "target/**/*.json" \
+  --run-information "features/reportinfo.yaml" \
+  --output-document "reports/feature-report.pdf"
+```
+
+### Example: HTML report without execution results
+
+```sh
+cargo run --bin report-generator -- \
+  --spec-path "features/**/*.feature" \
+  --report-format html \
+  --output-document "report.html"
+```
+
+If no JSON result files are supplied, the generator still renders a report from the feature definitions alone.
 
 ## Examples
 

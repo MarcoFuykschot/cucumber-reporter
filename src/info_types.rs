@@ -188,7 +188,7 @@ impl GherkinToDict for StepInfo {
         dict! {
             "keyword" => self.step.keyword.clone(),
             "text" => self.step.value.clone(),
-            "doc_string" => self.step.docstring().clone().map_or_else(|| Value::None, |s| s.clone().into_value()),
+            "doc_string" => self.step.docstring().map_or_else(|| Value::None, |s| s.clone().into_value()),
             "outcome" => self.result.as_ref().map(|result| result.result.status.to_string()),
             "table" => self.step.table.as_ref().map_or_else(||Value::None, |t| t.to_dict().into_value())
         }
@@ -246,7 +246,7 @@ impl GherkinToDict for ExampleInfo {
                             .cloned()
                             .collect::<Vec<_>>()
                     } else {
-                        row.iter().cloned().collect::<Vec<_>>()
+                        row.to_vec()
                     }
                 }))
                 .collect::<Vec<_>>();
@@ -296,7 +296,7 @@ impl GherkinToDict for ReportInfo {
             "title" => self.title.clone(),
             "author" => self.author.clone(),
             "sub_title" => self.sub_title.clone().map_or_else(|| Value::None, |s| s.clone().into_value()),
-            "time_run" => self.time_run.map_or_else(|| Value::None, |s| ReportGenerator::typst_datetime(  s.clone()).into_value() )
+            "time_run" => self.time_run.map_or_else(|| Value::None, |s| ReportGenerator::typst_datetime(  s).into_value() )
         }
     }
 }
