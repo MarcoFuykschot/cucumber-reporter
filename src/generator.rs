@@ -18,6 +18,7 @@ use crate::typst_world::{ReportGenerator, TypstTemplates};
 #[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]
 pub enum ReportFormat {
     Pdf,
+    #[value(help = "Experimental Typst HTML export; output may be incomplete")]
     Html,
 }
 
@@ -109,24 +110,52 @@ impl ReportGenerator {
             typst_world.sources.push(Source::new(template_id, content));
         }
 
-        let compile_pdf = typst::compile(&typst_world);
-
-        for warning in &compile_pdf.warnings {
-            warn!("Typst warning: {} ({:?})", warning.message, warning.span);
-        }
-        match compile_pdf.output {
-            Ok(doc) => {
-                let output_file_path = PathBuf::from(output_document);
-                if let Ok(pdf_bytes) = typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default()) {
-                    std::fs::write(output_file_path, pdf_bytes)?;
-                } else {
-                    eprintln!("Error generating PDF");
+        match report_format {
+            ReportFormat::Pdf => {
+                let compilation = typst::compile(&typst_world);
+                for warning in &compilation.warnings {
+                    warn!("Typst warning: {} ({:?})", warning.message, warning.span);
+                }
+                match compilation.output {
+                    Ok(doc) => {
+                        let output_file_path = PathBuf::from(output_document);
+                        if let Ok(pdf_bytes) =
+                            typst_pdf::pdf(&doc, &typst_pdf::PdfOptions::default())
+                        {
+                            std::fs::write(output_file_path, pdf_bytes)?;
+                        } else {
+                            eprintln!("Error generating PDF");
+                        }
+                    }
+                    Err(errors) => {
+                        eprint!("Error compiling Typst template ");
+                        for error in errors {
+                            eprintln!("{} {:?}", error.message, error.hints);
+                        }
+                    }
                 }
             }
-            Err(e) => {
-                eprint!("Error compiling Typst template ");
-                for error in e {
-                    eprintln!("{} {:?}", error.message, error.hints);
+            ReportFormat::Html => {
+                let compilation = typst::compile::<typst_html::HtmlDocument>(&typst_world);
+                for warning in &compilation.warnings {
+                    warn!("Typst warning: {} ({:?})", warning.message, warning.span);
+                }
+                match compilation.output {
+                    Ok(doc) => match typst_html::html(&doc, &typst_html::HtmlOptions::default()) {
+                        Ok(html) => std::fs::write(output_document, html)?,
+                        Err(errors) => {
+                            eprintln!("Error exporting Typst HTML");
+                            for error in errors {
+                                eprintln!("{} {:?}", error.message, error.hints);
+                            }
+                        }
+                    },
+                    Err(errors) => {
+                        eprint!("Error compiling Typst template ");
+                        for error in errors {
+                            eprintln!("{} {:?}", error.message, error.hints);
+                        }
+                    }
                 }
             }
         }

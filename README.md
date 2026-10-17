@@ -127,6 +127,13 @@ Currenlty templating functions by using html with basic css.
 For templating, the [handlebars](https://docs.rs/handlebars/latest/handlebars/) rust crate is used.
 For an example to use it. Refer to the default template in the `templates/` folder.
 
+## Experimental Typst HTML export
+The standalone `report-generator` also supports experimental Typst HTML output. Typst's HTML export is incomplete, so the output may differ from the PDF report.
+
+```sh
+cargo run --bin report-generator -- --spec-path "features/**/*.feature" --report-format html --output-document report.html
+```
+
 ## planned
 * direct pdf output
 * markdown in descriptions
