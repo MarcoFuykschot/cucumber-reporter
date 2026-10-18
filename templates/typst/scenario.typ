@@ -15,6 +15,12 @@
     #step.text
     #outcome([#step.outcome]) \
   ]
+  if step.error_message != none [
+    #box(
+      inset: (left: 2em, top: 0.2em),
+      text(size: 0.8em, fill: red)[Error: #step.error_message],
+    )
+  ]
   if step.table != none {
     let tab = step.table
     box(

@@ -71,6 +71,31 @@ impl GherkinToDict for FeatureInfo {
                 .map(|info| self.get_scenario_info(info)),
         );
 
+        let error_details = self
+            .results
+            .as_ref()
+            .map(|results| {
+                results
+                    .elements
+                    .iter()
+                    .flat_map(|element| {
+                        let scenario_name = if element.name.trim().is_empty() {
+                            "Feature parse error".to_string()
+                        } else {
+                            element.name.clone()
+                        };
+
+                        element.steps.iter().filter_map(move |step| {
+                            step.result.error_message.clone().map(|message| {
+                                (scenario_name.clone(), message)
+                            })
+                        })
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let error_message = error_details.first().map(|(_, message)| message.clone());
+
         dict! {
             "name" => self.feature.name.clone(),
             "description" => self.feature.description.clone(),
@@ -80,6 +105,14 @@ impl GherkinToDict for FeatureInfo {
             "path" => self.feature.path.clone().map_or(Value::None, |p| p.to_str().into_value()),
             "rules" => Array::from_iter( self.feature.rules.iter().map(|r| RuleInfo { rule: r.clone() , feature: self.clone() }.to_dict().into_value())),
             "tags" => self.feature.tags.clone(),
+            "errors" => Array::from_iter(error_details.iter().map(|(scenario, message)| {
+                dict! {
+                    "scenario" => scenario.clone(),
+                    "message" => message.clone(),
+                }
+                .into_value()
+            })),
+            "error_message" => error_message.map_or_else(|| Value::None, |message| message.into_value()),
         }
     }
 }
@@ -190,7 +223,8 @@ impl GherkinToDict for StepInfo {
             "text" => self.step.value.clone(),
             "doc_string" => self.step.docstring().map_or_else(|| Value::None, |s| s.clone().into_value()),
             "outcome" => self.result.as_ref().map(|result| result.result.status.to_string()),
-            "table" => self.step.table.as_ref().map_or_else(||Value::None, |t| t.to_dict().into_value())
+            "table" => self.step.table.as_ref().map_or_else(||Value::None, |t| t.to_dict().into_value()),
+            "error_message" => self.result.as_ref().and_then(|result| result.result.error_message.clone()).map_or_else(|| Value::None, |message| message.into_value())
         }
     }
 }
@@ -208,15 +242,16 @@ impl GherkinToDict for ExampleInfo {
             let mut headers = table.rows.first().expect("At least one row").clone();
             if self.result.is_some() {
                 headers.push("Outcome".into());
+                headers.push("Error".into());
             }
 
             let rows = std::iter::once(headers)
                 .chain(table.rows.iter().enumerate().skip(1).map(|(index, row)| {
-                    let outcome = if let Some(results) = &self.result
+                    let (outcome, error_message) = if let Some(results) = &self.result
                         && let Some(result) = results.iter().find(|p| {
                             p.line == (index as f64 + self.example.position.line as f64) + 1.0
                         }) {
-                        result
+                        let outcome = result
                             .steps
                             .iter()
                             .fold(cucumber_json::Status::Passed, |acc, step| {
@@ -236,24 +271,30 @@ impl GherkinToDict for ExampleInfo {
                                     _ => cucumber_json::Status::Passed,
                                 }
                             })
-                            .into()
-                    } else {
-                        None
-                    };
-                    if let Some(outcome) = outcome {
-                        row.iter()
-                            .chain([outcome.to_string()].iter())
-                            .cloned()
+                            .into();
+                        let error_message = result
+                            .steps
+                            .iter()
+                            .filter_map(|step| step.result.error_message.clone())
                             .collect::<Vec<_>>()
+                            .join("\n");
+                        (outcome, error_message)
                     } else {
-                        row.to_vec()
+                        (None, String::new())
+                    };
+
+                    let mut values = row.to_vec();
+                    if self.result.is_some() {
+                        values.push(outcome.map_or_else(|| "".to_string(), |status| status.to_string()));
+                        values.push(error_message);
                     }
+                    values
                 }))
                 .collect::<Vec<_>>();
 
             dict! {
                 "name" => self.example.name.clone(),
-                "columns" => colums + 1,
+                "columns" => colums + if self.result.is_some() { 2 } else { 0 },
                 "rows" => Array::from_iter(rows.iter().map(|row| {
                     Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
                 })),
