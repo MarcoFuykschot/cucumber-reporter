@@ -33,6 +33,22 @@
 
       #render_tags(feature.tags)
 
+      #if feature.errors != none and feature.errors.len() > 0 [
+        === Errors
+        #table(
+          columns: (auto, 1fr),
+          inset: 6pt,
+          fill: (x, y) => if y == 0 { rgb("#fbe8e8") } else { white },
+          stroke: (paint: red, thickness: 0.5pt),
+          [#text(fill: red, weight: "bold")[Scenario]],
+          [#text(fill: red, weight: "bold")[Message]],
+          ..feature.errors.map(error => (
+            [#text(fill: red)[#error.scenario]],
+            [#text(fill: red)[#error.message]],
+          )).flatten(),
+        )
+      ]
+
       #render_description(feature.description)
 
       #for rule in feature.rules {

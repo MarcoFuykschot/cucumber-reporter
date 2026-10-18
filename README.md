@@ -55,6 +55,61 @@ cargo run --bin report-generator -- \
 
 If no JSON result files are supplied, the generator still renders a report from the feature definitions alone.
 
+## Two ways to generate a report
+
+This project supports two complementary ways to produce output:
+
+1. The standalone `report-generator` binary, which reads feature files and optional Cucumber JSON results and writes a final PDF or HTML report to disk. This is the easiest option for a single report generation step in CI, scripts, or local runs.
+2. The Rust library integration, where `CucumberReporter` is attached to an existing Cucumber test run. This is useful when your test suite already produces regular Cucumber output and you want the report HTML generated as part of that run without creating a separate command.
+
+### 1. Standalone generator (CLI)
+
+This is the method shown above: point the tool at a feature glob and optionally a JSON result glob, then write the final document to a file.
+
+```sh
+cargo run --bin report-generator -- \
+  --spec-path "features/**/*.feature" \
+  --json-results-path "target/**/*.json" \
+  --run-information "features/reportinfo.yaml" \
+  --output-document "reports/feature-report.pdf"
+```
+
+This mode is best when you want a single generated report artifact from a known set of feature files.
+
+### 2. Cucumber integration (Rust library)
+
+If you already run Cucumber tests from Rust, you can tee `CucumberReporter` into the writer pipeline. The reporter collects the same feature data while the normal Cucumber output continues to flow to stdout and/or JSON.
+
+```rust
+use cucumber::{
+    World, WriterExt,
+    writer::{self, Basic},
+};
+use cucumber_reporter::CucumberReporter;
+
+#[derive(World, Debug, Default)]
+struct ReporterWorld;
+
+#[tokio::main]
+async fn main() {
+    ReporterWorld::cucumber()
+        .with_default_cli()
+        .with_writer(
+            Basic::stdout()
+                .summarized()
+                .tee::<ReporterWorld, _>(writer::Json::for_tee(
+                    std::fs::File::create("target/results.json").unwrap(),
+                ))
+                .tee::<ReporterWorld, _>(CucumberReporter::new())
+                .normalized(),
+        )
+        .run("features")
+        .await;
+}
+```
+
+This mode is best when the report should be produced as part of the existing test execution flow, instead of as a separate post-processing step.
+
 ## Examples
 
 ### A simple gherkin feature file
@@ -168,11 +223,6 @@ The standalone `report-generator` also supports experimental Typst HTML output. 
 ```sh
 cargo run --bin report-generator -- --spec-path "features/**/*.feature" --report-format html --output-document report.html
 ```
-
-## planned
-* direct pdf output
-* markdown in descriptions
-* doc stringsc stringsrings
 
 ## References
 
