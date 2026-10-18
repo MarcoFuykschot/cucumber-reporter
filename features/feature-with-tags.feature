@@ -1,4 +1,4 @@
-@tag1 @tag2
+@Tag1 @Tag2
 Feature: Feature with tags
 
     Feature Description

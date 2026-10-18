@@ -1,3 +1,4 @@
+@Tag1 @Tag2
 Feature: a long name with 'None' url nameand special chars #!@#$%^&*()
 
     Scenario: A scenario with None url name

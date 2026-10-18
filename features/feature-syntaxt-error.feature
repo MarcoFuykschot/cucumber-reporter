@@ -2,4 +2,4 @@ Feature: Feature name
 
     Feature Description
 
-@tag1
+@Tag1
