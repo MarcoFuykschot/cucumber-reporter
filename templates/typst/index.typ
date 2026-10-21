@@ -50,6 +50,7 @@
     columns: (1fr, auto),
     inset: 7pt,
     align: left,
+    stroke: table_stroke,
     [Feature], [Outcome],
     ..summary_rows.flatten(),
   )

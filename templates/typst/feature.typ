@@ -39,7 +39,7 @@
           columns: (auto, 1fr),
           inset: 6pt,
           fill: (x, y) => if y == 0 { rgb("#fbe8e8") } else { white },
-          stroke: (paint: red, thickness: 0.5pt),
+          stroke: table_stroke,
           [#text(fill: red, weight: "bold")[Scenario]],
           [#text(fill: red, weight: "bold")[Message]],
           ..feature.errors.map(error => (
