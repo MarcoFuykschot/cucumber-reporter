@@ -1,6 +1,8 @@
 #import "@preview/cmarker:0.1.10"
 #import "@preview/in-dexter:0.7.2": *
 
+#let table_stroke = (paint: luma(200), thickness: 0.4pt)
+
 #let outcome(value) = {
   show "passed": outcome => text(fill: green, weight: "bold")[#outcome]
   show "failed": outcome => text(fill: red, weight: "bold")[#outcome]

@@ -27,9 +27,11 @@
       inset: (left: 10pt),
       [#table(
         columns: tab.columns,
+        stroke: table_stroke,
         ..tab.rows.map(row => row.map(cell => cell)).flatten()
       )],
     )
+    [ \ ]
   }
   if step.doc_string != none [
     #render_description(step.doc_string) \

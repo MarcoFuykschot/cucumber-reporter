@@ -18,10 +18,14 @@
       #render_tags(example.tags)
       #table(
         columns: example.columns,
-        ..example.rows.map(row => row.map(cell =>  {
-           outcome(cell)
+        stroke: table_stroke,
+        ..example.rows.enumerate().map(((index, row)) => row.map(cell => {
+          if index == 0 {
+            text(weight: "bold")[#outcome(cell)]
+          } else {
+            outcome(cell)
           }
-          )).flatten()
+        })).flatten()
       )
     ]
   ]
