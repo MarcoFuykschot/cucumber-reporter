@@ -3,6 +3,12 @@ all: build test check docs
 build:
     cargo build --release
 
+build-linux:
+    cargo build --release --target x86_64-unknown-linux-gnu
+
+build-musl:
+    cargo build --release --target x86_64-unknown-linux-musl
+
 test:
     cargo test --test main -- --output-html-path docs/
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --json-results-path target/results.json --output-document docs/report_with_result.pdf
