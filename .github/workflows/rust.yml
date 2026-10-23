@@ -3,11 +3,15 @@ name: Rust
 on:
   push:
     branches: [ "main" ]
+    tags: [ "v*.*.*" ]
   pull_request:
     branches: [ "main" ]
 
 env:
   CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -24,3 +28,28 @@ jobs:
       run: just test
     - name: Run clippy
       run: just check
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install just and build targets
+      run: |
+        cargo install just
+        rustup target add x86_64-unknown-linux-gnu x86_64-unknown-linux-musl
+        sudo apt-get update
+        sudo apt-get install -y musl-tools
+        just build-linux
+        just build-musl
+        VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "cucumber-reporter") | .version')
+        mkdir -p dist
+        cp target/x86_64-unknown-linux-gnu/release/report-generator "dist/report-generator-${VERSION}-linux-gnu"
+        cp target/x86_64-unknown-linux-musl/release/report-generator "dist/report-generator-${VERSION}-linux-musl"
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/*
