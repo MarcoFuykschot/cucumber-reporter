@@ -17,7 +17,7 @@ test:
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --json-results-path target/results.json --output-document docs/report_with_result.html --report-format html
 
 install-tools:
-    echo "no tools"
+    sudo apt install -y libssl-dev
 
 check:
     cargo clippy --all-targets --all-features -- -D warnings
