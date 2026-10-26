@@ -44,6 +44,7 @@ impl EmbeddedTypstPackages {
                 continue;
             };
 
+            debug!("Loading embedded file {:?}",file);
             let archive_name = file.rsplit('/').next().unwrap_or(&file);
             let Some((namespace, package_name)) = archive_name
                 .strip_prefix('@')
@@ -69,10 +70,10 @@ impl EmbeddedTypstPackages {
                 let Ok(mut entry) = entry else {
                     continue;
                 };
-
                 let Ok(path) = entry.path() else {
                     continue;
                 };
+                debug!("Loading internal package file {:?}",path);
                 let path = path.to_string_lossy().replace('\\', "/");
 
                 if path.is_empty() || path.ends_with('/') || path == "." {
@@ -112,7 +113,7 @@ impl FileLoader for EmbeddedTypstPackages {
                 {
                     return Ok(file);
                 }
-
+                debug!("Downloading package {:?}",spec);
                 let packages = SystemPackages::new(SystemDownloader::new("cucumber-rs-reporter"));
                 packages
                     .obtain(spec)
