@@ -20,6 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        lfs: true
     - name: install tools
       run: |
         sudo apt-get update
@@ -39,6 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        lfs: true
     - name: Install just and build targets
       run: |
         cargo install just
