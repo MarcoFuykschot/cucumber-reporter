@@ -23,14 +23,24 @@
   ]
   if step.table != none {
     let tab = step.table
-    box(
-      inset: (left: 10pt),
-      [#table(
-        columns: tab.columns,
-        stroke: table_stroke,
-        ..tab.rows.map(row => row.map(cell => cell)).flatten()
-      )],
-    )
+    let rows = tab.rows
+    let headers = rows.at(0, default: ())
+    box(inset: (left: 10pt), [
+      #context {
+        let header_rotation = table_header_rotation(headers, tab.columns)
+        table(
+          columns: table_columns(tab.columns),
+          stroke: table_stroke,
+          ..rows.enumerate().map(((index, row)) => row.map(cell => {
+            if index == 0 {
+              render_table_header(cell, rotation: header_rotation)
+            } else {
+              cell
+            }
+          })).flatten()
+        )
+      }
+    ])
     [ \ ]
   }
   if step.doc_string != none [

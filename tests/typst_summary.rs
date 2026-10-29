@@ -235,3 +235,61 @@ fn includes_outline_error_column_in_typst_output() {
     std::fs::remove_file(&results_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
 }
+
+#[test]
+fn rotates_overlapping_table_headers_in_steps_and_examples() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-rotated-headers-{}.pdf",
+        std::process::id()
+    ));
+    let html_output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-rotated-headers-{}.html",
+        std::process::id()
+    ));
+    let spec_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-rotated-headers-{}.feature",
+        std::process::id()
+    ));
+    std::fs::write(
+        &spec_path,
+        "Feature: Wide table headers\n\
+         Scenario: Step table\n\
+         Given values\n\
+         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating |\n\
+         | Value 1 | Value 2 | 3 | | | | | | |\n\
+         Scenario Outline: Examples table\n\
+         Given a value\n\
+         Examples:\n\
+         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating |\n\
+         | Value 1 | Value 2 | 3 | | | | | | |\n",
+    )
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Pdf,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let pdf = std::fs::read(&output_path).unwrap();
+    assert!(pdf.starts_with(b"%PDF-"));
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        html_output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&html_output_path).unwrap();
+    assert!(html.matches("A other exta long column name to test formating").count() >= 2);
+
+    std::fs::remove_file(spec_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+    std::fs::remove_file(html_output_path).unwrap();
+}

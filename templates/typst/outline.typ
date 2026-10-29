@@ -16,17 +16,22 @@
     #for example in scenario.examples [
       #emph([Examples])
       #render_tags(example.tags)
-      #table(
-        columns: example.columns,
-        stroke: table_stroke,
-        ..example.rows.enumerate().map(((index, row)) => row.map(cell => {
-          if index == 0 {
-            text(weight: "bold")[#outcome(cell)]
-          } else {
-            outcome(cell)
-          }
-        })).flatten()
-      )
+      #let rows = example.rows
+      #let headers = rows.at(0, default: ())
+      #context {
+        let header_rotation = table_header_rotation(headers, example.columns)
+        table(
+          columns: table_columns(example.columns),
+          stroke: table_stroke,
+          ..rows.enumerate().map(((index, row)) => row.map(cell => {
+            if index == 0 {
+              render_table_header(outcome(cell), rotation: header_rotation)
+            } else {
+              outcome(cell)
+            }
+          })).flatten()
+        )
+      }
     ]
   ]
 }

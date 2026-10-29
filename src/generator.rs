@@ -160,6 +160,10 @@ impl ReportGenerator {
             run_info.to_dict().into_value(),
         );
 
+        inputs.insert(
+            "is_html".into(),
+            (report_format == ReportFormat::Html).into_value(),
+        );
         inputs.insert("features".into(), Value::Array(features_dict));
         let mut typst_world = ReportGenerator::new(inputs);
 
