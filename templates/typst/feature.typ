@@ -5,12 +5,12 @@
 #import "styles.typ": *
 
 #let render_feature(feature, index: none) = {
-  let render_element(element) = {
+  let render_element(element, level: 3) = {
     if element.keyword == "Scenario" {
-      render_scenario(element)
+      render_scenario(element, level: level)
     } else {
       if element.keyword == "Scenario Outline" {
-        render_outline(element)
+        render_outline(element, level: level)
       }
     }
   }
@@ -51,15 +51,14 @@
 
       #render_description(feature.description)
 
-      #for rule in feature.rules {
-        [== Rule: #rule.name
-          #render_tags(rule.tags)
-          #render_description(rule.description)
-          #for scenario in rule.scenarios [
-            #render_element(scenario)
-          ]
+      #for rule in feature.rules [
+        === Rule: #rule.name
+        #render_tags(rule.tags)
+        #render_description(rule.description)
+        #for scenario in rule.scenarios [
+          #render_element(scenario, level: 4)
         ]
-      }
+      ]
 
       #if not feature.background == none [
         === Background
@@ -77,7 +76,7 @@
       #if feature.scenarios.len() > 0 [
         === Scenarios
         #for scenario in feature.scenarios [
-          #render_element(scenario)
+          #render_element(scenario, level: 3)
         ]
       ]
     ]
