@@ -2,7 +2,7 @@
 #import "scenario.typ": *
 #import "styles.typ": *
 
-#let render_outline(scenario) = {
+#let render_outline(scenario, level: 3) = {
 
    show regex("<[^>]+>"): placeholder => {
     show "<": ""
@@ -10,7 +10,7 @@
     text(style: "italic", fill: gray)[#placeholder]
   }
 
-  render_scenario(scenario)
+  render_scenario(scenario, level: level)
 
   [
     #for example in scenario.examples [

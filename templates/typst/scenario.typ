@@ -23,23 +23,12 @@
   ]
   if step.table != none {
     let tab = step.table
-    let rows = tab.rows
-    let headers = rows.at(0, default: ())
     box(inset: (left: 10pt), [
-      #context {
-        let header_rotation = table_header_rotation(headers, tab.columns)
-        table(
-          columns: table_columns(tab.columns),
-          stroke: table_stroke,
-          ..rows.enumerate().map(((index, row)) => row.map(cell => {
-            if index == 0 {
-              render_table_header(cell, rotation: header_rotation)
-            } else {
-              cell
-            }
-          })).flatten()
-        )
-      }
+      #table(
+        columns: table_columns(tab.columns),
+        stroke: table_stroke,
+        ..tab.rows.flatten()
+      )
     ])
     [ \ ]
   }
@@ -48,18 +37,22 @@
   ]
 }
 
-#let render_scenario(scenario) = [
-  ==== Scenario: #scenario.name
+#let render_scenario(scenario, level: 3) = {
+  if level == 4 {
+    [==== Scenario: #scenario.name]
+  } else {
+    [=== Scenario: #scenario.name]
+  }
 
-  #render_tags(scenario.tags)
+  render_tags(scenario.tags)
 
-  #render_description(scenario.description)
+  render_description(scenario.description)
 
-  #if scenario.steps.len() > 0 [
+  if scenario.steps.len() > 0 [
     #for step in scenario.steps {
       render_step(step)
     }
   ] else [
     #emph[No steps defined for this scenario.]
   ]
-]
+}
