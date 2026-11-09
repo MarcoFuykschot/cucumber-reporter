@@ -4,6 +4,8 @@
 
 #let table_stroke = (paint: luma(200), thickness: 0.4pt)
 
+#let render_markdown(markdown) = cmarker.render(markdown)
+
 #let table_header_rotation(headers, columns) = {
   if inputs.at("is_html", default: false) or columns <= 0 {
     none
