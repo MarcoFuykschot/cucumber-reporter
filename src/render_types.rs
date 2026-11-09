@@ -7,6 +7,8 @@ pub(crate) struct FeatureRenderData {
     pub description: String,
     pub scenarios: String,
     pub rules: String,
+    pub scenario_summary: String,
+    pub rule_list: String,
 }
 
 #[derive(Serialize, Clone, Debug,Default)]

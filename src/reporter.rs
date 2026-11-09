@@ -167,11 +167,57 @@ impl CucumberReporter {
                 rules.push(rules_html.to_string());
             }
 
+            let mut scenario_summary_rows = Vec::new();
+            for scenario in &feature.scenarios {
+                let outcome = self.scenario_outcome(scenario);
+                scenario_summary_rows.push(format!(
+                    "<tr><td>{}</td><td>{}</td></tr>",
+                    scenario.name,
+                    outcome
+                ));
+            }
+            for rule in &feature.rules {
+                for scenario in &rule.scenarios {
+                    let outcome = self.scenario_outcome(scenario);
+                    scenario_summary_rows.push(format!(
+                        "<tr><td>{} - {}</td><td>{}</td></tr>",
+                        rule.name,
+                        scenario.name,
+                        outcome
+                    ));
+                }
+            }
+
+            let mut rule_rows = Vec::new();
+            for rule in &feature.rules {
+                let outcome = self.rule_outcome(rule);
+                rule_rows.push(format!("<tr><td>{}</td><td>{}</td></tr>", rule.name, outcome));
+            }
+
+            let scenario_summary = if scenario_summary_rows.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "<table><thead><tr><th>Scenario</th><th>Outcome</th></tr></thead><tbody>{}</tbody></table>",
+                    scenario_summary_rows.join("")
+                )
+            };
+            let rule_list = if rule_rows.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "<table><thead><tr><th>Rule</th><th>Outcome</th></tr></thead><tbody>{}</tbody></table>",
+                    rule_rows.join("")
+                )
+            };
+
             let data = FeatureRenderData {
                 name: feature.name.clone(),
                 description: feature.description.clone().unwrap_or_default(),
                 scenarios: scenarios.join(""),
                 rules: rules.join(""),
+                scenario_summary,
+                rule_list,
             };
             let feature_html = templates.render("feature.html", &data)?;
             let html = templates
@@ -227,6 +273,42 @@ impl CucumberReporter {
         let index_html = templates.render("index.html", &data)?;
         write_html_file(args, index_html, "index.html".to_string())?;
         Ok(())
+    }
+
+    fn scenario_outcome(&self, scenario: &gherkin::Scenario) -> &'static str {
+        if scenario
+            .steps
+            .iter()
+            .any(|step| self.step_states.get(&step.id()).is_some_and(|state| state == &StepState::Failed))
+        {
+            "failed"
+        } else if scenario.steps.iter().any(|step| {
+            self.step_states
+                .get(&step.id())
+                .is_none_or(|state| state == &StepState::NotRun)
+        }) {
+            "skipped"
+        } else {
+            "passed"
+        }
+    }
+
+    fn rule_outcome(&self, rule: &gherkin::Rule) -> &'static str {
+        if rule
+            .scenarios
+            .iter()
+            .any(|scenario| self.scenario_outcome(scenario) == "failed")
+        {
+            "failed"
+        } else if rule
+            .scenarios
+            .iter()
+            .any(|scenario| self.scenario_outcome(scenario) == "skipped")
+        {
+            "skipped"
+        } else {
+            "passed"
+        }
     }
 
     fn render_rule(

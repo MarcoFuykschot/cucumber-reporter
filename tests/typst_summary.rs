@@ -28,6 +28,33 @@ fn exports_typst_as_html() {
 }
 
 #[test]
+fn includes_feature_summary_and_rules_list_in_html() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-html-summary-{}.html",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-with-rules.feature");
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("Scenario summary"));
+    assert!(html.contains("<td>Outcome</td>"));
+    assert!(html.contains("rule 1</td>"));
+    assert!(html.contains("rule 1 - Scenario 1"));
+
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
 fn renders_feature_introduction_from_markdown_file() {
     let output_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-introduction-{}.html",
@@ -214,6 +241,7 @@ fn includes_feature_parse_errors_in_typst_output() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("Errors"));
     assert!(html.contains("Could not parse feature file"));
     assert!(html.contains("feature-syntaxt-error"));
 

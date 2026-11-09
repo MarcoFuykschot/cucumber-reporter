@@ -1,6 +1,17 @@
 <div>
     <h1 class="title">{{name}}</h1>
     <p class="desc">{{description}}</p>
+
+    {{#if scenario_summary}}
+    <h2>Scenario summary</h2>
+    {{{scenario_summary}}}
+    {{/if}}
+
+    {{#if rule_list}}
+    <h2>Rules</h2>
+    {{{rule_list}}}
+    {{/if}}
+
     {{{rules}}}
     {{{scenarios}}}
 </div>
