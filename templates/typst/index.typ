@@ -10,6 +10,7 @@
 #set heading(numbering: "1.")
 
 #import "feature.typ": *
+#import "styles.typ": render_markdown
 
 #let runinfo = inputs.at("runinfo", default: {})
 
@@ -33,6 +34,17 @@
 #let features = inputs.at("features", default: ())
 
 = Features
+
+#let feature-introduction = runinfo.at("feature_introduction", default: none)
+#if feature-introduction != none [
+  #if runinfo.feature_introduction_format == "markdown" [
+    #render_markdown(feature-introduction)
+  ] else if runinfo.feature_introduction_format == "typst" [
+    #eval(feature-introduction, mode: "markup")
+  ] else [
+    #feature-introduction
+  ]
+]
 
 #if features != none and features.len() > 0 [
   #let summary_rows = features.enumerate().map(((index, item)) => {

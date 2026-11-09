@@ -155,10 +155,38 @@ impl ReportGenerator {
         };
 
         let mut inputs = Dict::new();
-        inputs.insert(
-            "runinfo".into(),
-            run_info.to_dict().into_value(),
-        );
+        let mut run_info_dict = run_info.to_dict();
+        if let Some(introduction) = &run_info.feature_introduction {
+            let introduction_path = Path::new(introduction);
+            if !introduction_path.is_file() {
+                return Err(anyhow!(
+                    "Feature introduction must be a path to an existing .md, .typ, or .txt file: {}",
+                    introduction_path.display()
+                ));
+            }
+            let extension = introduction_path
+                .extension()
+                .and_then(|extension| extension.to_str())
+                .map(str::to_ascii_lowercase);
+            let format = match extension.as_deref() {
+                Some("md") => "markdown",
+                Some("typ") => "typst",
+                Some("txt") => "text",
+                _ => {
+                    return Err(anyhow!(
+                        "Unsupported feature introduction file extension: {}",
+                        introduction_path.display()
+                    ));
+                }
+            };
+            let content = std::fs::read_to_string(introduction_path)?;
+            run_info_dict.insert("feature_introduction".into(), content.into_value());
+            run_info_dict.insert(
+                "feature_introduction_format".into(),
+                format.into_value(),
+            );
+        }
+        inputs.insert("runinfo".into(), run_info_dict.into_value());
 
         inputs.insert(
             "is_html".into(),

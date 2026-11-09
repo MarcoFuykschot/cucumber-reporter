@@ -316,6 +316,8 @@ pub struct ReportInfo {
     pub(crate) author: String,
     pub(crate) sub_title: Option<String>,
     pub(crate) time_run: Option<DateTime<Utc>>,
+    // A markdown string or filename to a markdown file that will be used as an introduction to the feature chapter
+    pub (crate) feature_introduction: Option<String>,
 }
 
 impl Default for ReportInfo {
@@ -327,7 +329,9 @@ impl Default for ReportInfo {
                 .unwrap_or_else(|_| "Unknown".to_string()),
             sub_title: Default::default(),
             time_run: chrono::Local::now().to_utc().into(),
+            feature_introduction: None
         }
+        
     }
 }
 

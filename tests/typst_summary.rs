@@ -28,6 +28,134 @@ fn exports_typst_as_html() {
 }
 
 #[test]
+fn renders_feature_introduction_from_markdown_file() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-introduction-{}.html",
+        std::process::id()
+    ));
+    let introduction_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-introduction-{}.md",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    std::fs::write(&introduction_path, "**Markdown introduction**").unwrap();
+    let run_info: ReportInfo = serde_yaml::from_str(&format!(
+        "feature_introduction: '{}'",
+        introduction_path.display()
+    ))
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("Markdown introduction"));
+    assert!(!html.contains("**"));
+
+    std::fs::remove_file(introduction_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_feature_introduction_from_typst_file() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-introduction-typst-{}.html",
+        std::process::id()
+    ));
+    let introduction_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-introduction-{}.typ",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    std::fs::write(&introduction_path, "#strong[Typst introduction]").unwrap();
+    let run_info: ReportInfo = serde_yaml::from_str(&format!(
+        "feature_introduction: '{}'",
+        introduction_path.display()
+    ))
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("<strong>Typst introduction</strong>"));
+
+    std::fs::remove_file(introduction_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_feature_introduction_from_txt_file_as_plain_text() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-introduction-plain-{}.html",
+        std::process::id()
+    ));
+    let introduction_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-introduction-{}.txt",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    std::fs::write(&introduction_path, "**Plain-text file introduction**").unwrap();
+    let run_info: ReportInfo = serde_yaml::from_str(&format!(
+        "feature_introduction: '{}'",
+        introduction_path.display()
+    ))
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("**Plain-text file introduction**"));
+
+    std::fs::remove_file(introduction_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn rejects_feature_introduction_that_is_not_a_file() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-introduction-string-{}.html",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    let run_info: ReportInfo =
+        serde_yaml::from_str("feature_introduction: 'Literal **introduction**'").unwrap();
+
+    let result = ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    );
+
+    assert!(result.unwrap_err().to_string().contains("existing .md, .typ, or .txt file"));
+}
+
+#[test]
 fn includes_feature_parse_errors_in_typst_output() {
     let output_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-parse-error-{}.html",

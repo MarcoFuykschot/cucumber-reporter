@@ -32,7 +32,12 @@ title: "A report on features"
 author: "By someone"
 sub_title: "Subtile is a nice title"
 time_run: "2026-10-15T15:15:15Z"
+feature_introduction: "features/feature-introduction.md"
 ```
+
+`feature_introduction` must be the path to an existing `.md`, `.typ`, or `.txt`
+file. Markdown files are rendered as Markdown, Typst files as Typst markup, and
+text files as plain text.
 
 ### Example: PDF report with Cucumber JSON results
 
@@ -234,4 +239,3 @@ cargo run --bin report-generator -- --spec-path "features/**/*.feature" --report
 * [Handlebars](https://docs.rs/handlebars/latest/handlebars/) - crate used.
 * [Handlebarsjs](https://handlebarsjs.com/guide/) - better guide for templating.
 * [Typst]
-
