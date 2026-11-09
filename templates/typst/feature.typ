@@ -33,23 +33,68 @@
 
       #render_tags(feature.tags)
 
-      #if feature.errors != none and feature.errors.len() > 0 [
-        === Errors
+      #render_description(feature.description)
+
+      #let rules_table = feature.rules.map(rule => {
+        let step_outcomes = rule.scenarios.map(scenario => {
+          let outcomes = scenario.steps.map(step => step.outcome)
+          if outcomes.any(value => value == "failed") { "failed" }
+          else if outcomes.any(value => value == "skipped") { "skipped" }
+          else { "passed" }
+        })
+        let outcome_value = if step_outcomes.any(value => value == "failed") { "failed" }
+          else if step_outcomes.any(value => value == "skipped") { "skipped" }
+          else { "passed" }
+        ([#rule.name], [#outcome(outcome_value)])
+      })
+      #if rules_table.len() > 0 [
+        === Rules summary
         #table(
-          columns: (auto, 1fr),
+          columns: (1fr, auto),
           inset: 6pt,
-          fill: (x, y) => if y == 0 { rgb("#fbe8e8") } else { white },
           stroke: table_stroke,
-          [#text(fill: red, weight: "bold")[Scenario]],
-          [#text(fill: red, weight: "bold")[Message]],
-          ..feature.errors.map(error => (
-            [#text(fill: red)[#error.scenario]],
-            [#text(fill: red)[#error.message]],
-          )).flatten(),
+          [Rule], [Outcome],
+          ..rules_table.flatten(),
         )
       ]
 
-      #render_description(feature.description)
+      #let summary_rows = (
+        feature.scenarios.map(scenario => {
+          let outcome_value = if scenario.steps.len() > 0 {
+            let outcomes = scenario.steps.map(step => step.outcome)
+            if outcomes.any(value => value == "failed") { "failed" }
+            else if outcomes.any(value => value == "skipped") { "skipped" }
+            else { "passed" }
+          } else {
+            "passed"
+          }
+          let errors = feature.errors.filter(error => error.scenario == scenario.name).map(error => error.message).join("\n")
+          ([#scenario.name], [#outcome(outcome_value)], [#errors])
+        })
+        + feature.rules.map(rule => rule.scenarios.map(scenario => {
+          let outcome_value = if scenario.steps.len() > 0 {
+            let outcomes = scenario.steps.map(step => step.outcome)
+            if outcomes.any(value => value == "failed") { "failed" }
+            else if outcomes.any(value => value == "skipped") { "skipped" }
+            else { "passed" }
+          } else {
+            "passed"
+          }
+          let errors = feature.errors.filter(error => error.scenario == scenario.name).map(error => error.message).join("\n")
+          ([#rule.name - #scenario.name], [#outcome(outcome_value)], [#errors])
+        })).flatten()
+        + feature.errors.map(error => ([#error.scenario], [#outcome("failed")], [#error.message]))
+      )
+      #if summary_rows.len() > 0 [
+        === Scenario summary
+        #table(
+          columns: (1fr, auto, 1.5fr),
+          inset: 6pt,
+          stroke: table_stroke,
+          [Scenario], [Outcome], [Errors],
+          ..summary_rows.flatten(),
+        )
+      ]
 
       #for rule in feature.rules [
         === Rule: #rule.name
