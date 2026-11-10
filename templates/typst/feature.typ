@@ -23,8 +23,7 @@
         columns: (auto, auto),
         gutter: 0.5em,
         align: (left, bottom),
-        [== #feature.name],
-        if feature.outcome != none [#outcome(feature.outcome)] else [],
+        [== #feature.name], if feature.outcome != none [#outcome(feature.outcome)] else [],
       )
       #if index != none [
         #let feature-id = "feature-" + str(index)
@@ -36,16 +35,7 @@
       #render_description(feature.description)
 
       #let rules_table = feature.rules.map(rule => {
-        let step_outcomes = rule.scenarios.map(scenario => {
-          let outcomes = scenario.steps.map(step => step.outcome)
-          if outcomes.any(value => value == "failed") { "failed" }
-          else if outcomes.any(value => value == "skipped") { "skipped" }
-          else { "passed" }
-        })
-        let outcome_value = if step_outcomes.any(value => value == "failed") { "failed" }
-          else if step_outcomes.any(value => value == "skipped") { "skipped" }
-          else { "passed" }
-        ([#rule.name], [#outcome(outcome_value)])
+        ([#rule.name], if rule.outcome != none [#outcome(rule.outcome)] else [])
       })
       #if rules_table.len() > 0 [
         === Rules summary
@@ -60,30 +50,29 @@
 
       #let summary_rows = (
         feature.scenarios.map(scenario => {
-          let outcome_value = if scenario.steps.len() > 0 {
-            let outcomes = scenario.steps.map(step => step.outcome)
-            if outcomes.any(value => value == "failed") { "failed" }
-            else if outcomes.any(value => value == "skipped") { "skipped" }
-            else { "passed" }
-          } else {
-            "passed"
-          }
-          let errors = feature.errors.filter(error => error.scenario == scenario.name).map(error => error.message).join("\n")
-          ([#scenario.name], [#outcome(outcome_value)], [#errors])
+          let errors = feature
+            .errors
+            .filter(error => error.scenario == scenario.name)
+            .map(error => error.message)
+            .join("\n")
+          ([#scenario.name], if scenario.outcome != none [#outcome(scenario.outcome)] else [], [#errors])
         })
-        + feature.rules.map(rule => rule.scenarios.map(scenario => {
-          let outcome_value = if scenario.steps.len() > 0 {
-            let outcomes = scenario.steps.map(step => step.outcome)
-            if outcomes.any(value => value == "failed") { "failed" }
-            else if outcomes.any(value => value == "skipped") { "skipped" }
-            else { "passed" }
-          } else {
-            "passed"
-          }
-          let errors = feature.errors.filter(error => error.scenario == scenario.name).map(error => error.message).join("\n")
-          ([#rule.name - #scenario.name], [#outcome(outcome_value)], [#errors])
-        })).flatten()
-        + feature.errors.map(error => ([#error.scenario], [#outcome("failed")], [#error.message]))
+          + feature
+            .rules
+            .map(rule => rule.scenarios.map(scenario => {
+              let errors = feature
+                .errors
+                .filter(error => error.scenario == scenario.name)
+                .map(error => error.message)
+                .join("\n")
+              (
+                [#rule.name - #scenario.name],
+                if scenario.outcome != none [#outcome(scenario.outcome)] else [],
+                [#errors],
+              )
+            }))
+            .flatten()
+          + feature.errors.map(error => ([#error.scenario], [#outcome("failed")], [#error.message]))
       )
       #if summary_rows.len() > 0 [
         === Scenario summary
@@ -96,12 +85,15 @@
         )
       ]
 
-      #for rule in feature.rules [
-        === Rule: #rule.name
-        #render_tags(rule.tags)
-        #render_description(rule.description)
-        #for scenario in rule.scenarios [
-          #render_element(scenario, level: 4)
+      #if feature.rules.len() > 0 [
+        === Requirements
+        #for rule in feature.rules [
+          === #rule.name
+          #render_tags(rule.tags)
+          #render_description(rule.description)
+          #for scenario in rule.scenarios [
+            #render_element(scenario, level: 4)
+          ]
         ]
       ]
 

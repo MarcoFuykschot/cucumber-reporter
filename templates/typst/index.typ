@@ -80,6 +80,6 @@
 
 #pagebreak()
 = Tag index
-#columns(3)[
-  #make-index(title: none,outlined: true , section-title: (_,_) => [])
+#columns(2)[
+  #make-index(title: none,outlined: true )
 ]

@@ -50,7 +50,90 @@ fn includes_feature_summary_and_rules_list_in_html() {
     assert!(html.contains("<td>Outcome</td>"));
     assert!(html.contains("rule 1</td>"));
     assert!(html.contains("rule 1 - Scenario 1"));
+    assert!(html.contains("<td>rule 1</td><td></td>"));
+    assert!(html.contains("<td>rule 1 - Scenario 1</td><td></td>"));
+    assert!(html.contains("<div>Description test scenario</div><p><span"));
+    assert!(html.contains("<div>Description of a rule</div><h5"));
 
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn calculates_rule_outcomes_from_results_in_rust() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-rule-outcomes-{}.html",
+        std::process::id()
+    ));
+    let results_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-rule-outcomes-{}.json",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-with-rules.feature");
+
+    std::fs::write(
+        &results_path,
+        r#"[
+            {
+              "uri": "features/feature-with-rules.feature",
+              "keyword": "Feature",
+              "name": "rules",
+              "tags": [],
+              "elements": [
+                {
+                  "keyword": "Scenario",
+                  "type": "scenario",
+                  "id": "scenario-1",
+                  "line": 6,
+                  "name": "Scenario 1",
+                  "tags": [],
+                  "steps": [
+                    {
+                      "keyword": "Given",
+                      "line": 7,
+                      "name": "a fact",
+                      "result": { "status": "failed", "duration": 0 }
+                    }
+                  ]
+                },
+                {
+                  "keyword": "Scenario",
+                  "type": "scenario",
+                  "id": "scenario-2",
+                  "line": 34,
+                  "name": "Scenario 1",
+                  "tags": [],
+                  "steps": [
+                    {
+                      "keyword": "Given",
+                      "line": 35,
+                      "name": "a fact",
+                      "result": { "status": "skipped", "duration": 0 }
+                    }
+                  ]
+                }
+              ]
+            }
+        ]"#,
+    )
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &Some(vec![results_path.clone()]),
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("<td>rule 1</td><td>failed</td>"));
+    assert!(html.contains("<td>rule 2</td><td>skipped</td>"));
+    assert!(html.contains("<td>rule 1 - Scenario 1</td><td>failed</td>"));
+    assert!(html.contains("<td>rule 2 - Scenario 1</td><td>skipped</td>"));
+
+    std::fs::remove_file(results_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
 }
 

@@ -69,7 +69,7 @@
 
 #let render_description(description) = {
   if description != none {
-    box(inset: (left: 10pt), [
+    block(inset: (left: 10pt), [
       #context {
         set heading(bookmarked: false, outlined: false, numbering: none)
         show heading: set text(weight: "bold", size: 8pt)

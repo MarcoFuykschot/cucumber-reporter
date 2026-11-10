@@ -22,13 +22,7 @@ impl FeatureInfo {
                 .iter()
                 .flat_map(|s| s.steps.iter())
                 .fold(cucumber_json::Status::Passed, |acc, step| {
-                    match (acc, step.result.status) {
-                        (cucumber_json::Status::Failed, _) => cucumber_json::Status::Failed,
-                        (_, cucumber_json::Status::Failed) => cucumber_json::Status::Failed,
-                        (cucumber_json::Status::Skipped, _) => cucumber_json::Status::Skipped,
-                        (_, cucumber_json::Status::Skipped) => cucumber_json::Status::Skipped,
-                        _ => cucumber_json::Status::Passed,
-                    }
+                    combine_outcomes(acc, step.result.status)
                 })
                 .into()
         } else {
@@ -59,6 +53,21 @@ impl FeatureInfo {
             results,
         };
         scenario_info.to_dict().into_value()
+    }
+}
+
+fn combine_outcomes(
+    current: cucumber_json::Status,
+    next: cucumber_json::Status,
+) -> cucumber_json::Status {
+    match (current, next) {
+        (cucumber_json::Status::Failed, _) | (_, cucumber_json::Status::Failed) => {
+            cucumber_json::Status::Failed
+        }
+        (cucumber_json::Status::Skipped, _) | (_, cucumber_json::Status::Skipped) => {
+            cucumber_json::Status::Skipped
+        }
+        _ => cucumber_json::Status::Passed,
     }
 }
 
@@ -128,6 +137,18 @@ impl ScenarioInfo {
         self.scenario.keyword == "Scenario Outline" && !self.scenario.examples.is_empty()
     }
 
+    fn outcome(&self) -> Option<cucumber_json::Status> {
+        let results = self.results.as_ref()?;
+        Some(
+            results
+                .iter()
+                .flat_map(|result| result.steps.iter())
+                .fold(cucumber_json::Status::Passed, |outcome, step| {
+                    combine_outcomes(outcome, step.result.status)
+                }),
+        )
+    }
+
     fn result_matches(&self, result: &cucumber_json::Element) -> bool {
         if result.type_ != ElementType::Scenario {
             return false;
@@ -172,6 +193,7 @@ impl GherkinToDict for ScenarioInfo {
             "name" => self.scenario.name.clone(),
             "keyword" => self.scenario.keyword.clone(),
             "description" => self.scenario.description.clone(),
+            "outcome" => self.outcome().map_or_else(|| Value::None, |result| result.to_string().into_value()),
             "steps" => Array::from_iter(self.scenario.steps.iter().map(|s| {
                 StepInfo {
                     step: s.clone(),
@@ -198,12 +220,38 @@ pub(crate) struct RuleInfo {
     pub feature: FeatureInfo,
 }
 
+impl RuleInfo {
+    fn outcome(&self) -> Option<cucumber_json::Status> {
+        let results = self.feature.results.as_ref()?;
+        let mut outcome = cucumber_json::Status::Passed;
+
+        for scenario in &self.rule.scenarios {
+            let scenario_info = ScenarioInfo {
+                scenario: scenario.clone(),
+                results: None,
+            };
+            for result in results
+                .elements
+                .iter()
+                .filter(|result| scenario_info.result_matches(result))
+            {
+                for step in &result.steps {
+                    outcome = combine_outcomes(outcome, step.result.status);
+                }
+            }
+        }
+
+        Some(outcome)
+    }
+}
+
 impl GherkinToDict for RuleInfo {
     fn to_dict(&self) -> Dict {
         debug!("{:?}",self.rule.description);
         dict! {
             "name" => self.rule.name.clone(),
             "description" => self.rule.description.as_ref().map_or_else(|| Value::None, |d| Value::Str(d.clone().into())),
+            "outcome" => self.outcome().map_or_else(|| Value::None, |result| result.to_string().into_value()),
             "scenarios" => Array::from_iter(
                 self.rule.scenarios.iter().map(|s| self.feature.get_scenario_info(s))),
             "tags" => self.rule.tags.clone(),
