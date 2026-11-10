@@ -39,9 +39,9 @@
 
 #let render_scenario(scenario, level: 3) = {
   if level == 4 {
-    [==== Scenario: #scenario.name]
+    [==== #scenario.name]
   } else {
-    [=== Scenario: #scenario.name]
+    [=== #scenario.name]
   }
 
   render_tags(scenario.tags)

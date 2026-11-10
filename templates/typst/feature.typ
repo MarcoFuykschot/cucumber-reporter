@@ -23,8 +23,7 @@
         columns: (auto, auto),
         gutter: 0.5em,
         align: (left, bottom),
-        [== #feature.name],
-        if feature.outcome != none [#outcome(feature.outcome)] else [],
+        [== #feature.name], if feature.outcome != none [#outcome(feature.outcome)] else [],
       )
       #if index != none [
         #let feature-id = "feature-" + str(index)
@@ -51,14 +50,29 @@
 
       #let summary_rows = (
         feature.scenarios.map(scenario => {
-          let errors = feature.errors.filter(error => error.scenario == scenario.name).map(error => error.message).join("\n")
+          let errors = feature
+            .errors
+            .filter(error => error.scenario == scenario.name)
+            .map(error => error.message)
+            .join("\n")
           ([#scenario.name], if scenario.outcome != none [#outcome(scenario.outcome)] else [], [#errors])
         })
-        + feature.rules.map(rule => rule.scenarios.map(scenario => {
-          let errors = feature.errors.filter(error => error.scenario == scenario.name).map(error => error.message).join("\n")
-          ([#rule.name - #scenario.name], if scenario.outcome != none [#outcome(scenario.outcome)] else [], [#errors])
-        })).flatten()
-        + feature.errors.map(error => ([#error.scenario], [#outcome("failed")], [#error.message]))
+          + feature
+            .rules
+            .map(rule => rule.scenarios.map(scenario => {
+              let errors = feature
+                .errors
+                .filter(error => error.scenario == scenario.name)
+                .map(error => error.message)
+                .join("\n")
+              (
+                [#rule.name - #scenario.name],
+                if scenario.outcome != none [#outcome(scenario.outcome)] else [],
+                [#errors],
+              )
+            }))
+            .flatten()
+          + feature.errors.map(error => ([#error.scenario], [#outcome("failed")], [#error.message]))
       )
       #if summary_rows.len() > 0 [
         === Scenario summary
@@ -71,12 +85,15 @@
         )
       ]
 
-      #for rule in feature.rules [
-        === Rule: #rule.name
-        #render_tags(rule.tags)
-        #render_description(rule.description)
-        #for scenario in rule.scenarios [
-          #render_element(scenario, level: 4)
+      #if feature.rules.len() > 0 [
+        === Requirements
+        #for rule in feature.rules [
+          === #rule.name
+          #render_tags(rule.tags)
+          #render_description(rule.description)
+          #for scenario in rule.scenarios [
+            #render_element(scenario, level: 4)
+          ]
         ]
       ]
 
