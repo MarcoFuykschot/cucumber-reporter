@@ -14,8 +14,10 @@
 
   [
     #for example in scenario.examples [
-      #emph([Examples])
+      Variations:
+      \
       #render_tags(example.tags)
+
       #let rows = example.rows
       #let headers = rows.at(0, default: ())
       #context {
