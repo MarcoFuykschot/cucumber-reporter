@@ -11,14 +11,15 @@
     none
   } else {
     let max_column_width = 18cm / columns - 20pt
-    let needs_rotation = headers.any(
+    let rotatable_headers = headers.filter(header => not header.contains(" "))
+    let needs_rotation = rotatable_headers.any(
       header => measure(text(weight: "bold")[#header]).width > max_column_width,
     )
     if not needs_rotation {
       none
     } else {
       let fitting_angles = range(65, 91).filter(angle =>
-        headers.all(header =>
+        rotatable_headers.all(header =>
           {
             let size = measure(text(weight: "bold")[#header])
             let rotated_width = size.width * calc.cos(angle * 1deg) + size.height * calc.sin(angle * 1deg)
