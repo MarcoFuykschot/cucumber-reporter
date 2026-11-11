@@ -499,8 +499,8 @@ fn rotates_overlapping_table_headers_in_steps_and_examples() {
          Scenario Outline: Examples table\n\
          Given a value\n\
          Examples:\n\
-         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating |\n\
-         | Value 1 | Value 2 | 3 | | | | | | |\n",
+         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating | a_very_long_unbreakable_column_name_to_force_rotation |\n\
+         | Value 1 | Value 2 | 3 | | | | | | | |\n",
     )
     .unwrap();
 

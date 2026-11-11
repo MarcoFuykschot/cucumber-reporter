@@ -27,7 +27,10 @@
           stroke: table_stroke,
           ..rows.enumerate().map(((index, row)) => row.map(cell => {
             if index == 0 {
-              render_table_header(outcome(cell), rotation: header_rotation)
+              render_table_header(
+                outcome(cell),
+                rotation: if cell.contains(" ") { none } else { header_rotation },
+              )
             } else {
               outcome(cell)
             }
