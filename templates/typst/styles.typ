@@ -36,10 +36,12 @@
   }
 }
 
-#let render_table_header(cell, rotation: none) = {
+#let render_table_header(cell, rotation: none, wrap: false) = {
   let header = text(weight: "bold")[#cell]
   if rotation != none {
     align(bottom + center)[#rotate(-rotation, reflow: true)[#header]]
+  } else if wrap {
+    text(weight: "bold", hyphenate: true)[#cell]
   } else {
     header
   }

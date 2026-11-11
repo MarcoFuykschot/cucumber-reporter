@@ -30,6 +30,7 @@
               render_table_header(
                 outcome(cell),
                 rotation: if cell.contains(" ") { none } else { header_rotation },
+                wrap: true,
               )
             } else {
               outcome(cell)

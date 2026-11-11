@@ -39,6 +39,10 @@
             background-color: #f2f2f2;
         }
 
+        .example-header {
+            overflow-wrap: anywhere;
+        }
+
         .Failed {
             color: firebrick
         }
@@ -73,6 +77,11 @@
     <div>
     <h1 class="title">outline</h1>
     <p class="desc"></p>
+
+    <h2>Scenario summary</h2>
+    <table><thead><tr><th>Scenario</th><th>Outcome</th></tr></thead><tbody><tr><td>Scenario Outline name aaaaaaaaa1</td><td>passed</td></tr><tr><td>Scenario Outline name 2</td><td>failed</td></tr><tr><td>Scenario Outline name 3</td><td>passed</td></tr><tr><td>Scenario Outline name 4</td><td>passed</td></tr><tr><td>Scenario with skipped</td><td>skipped</td></tr><tr><td>Scenario with skipped</td><td>skipped</td></tr><tr><td>Scenario with skipped extra new line</td><td>skipped</td></tr><tr><td>Scenario with skipped extra new line</td><td>skipped</td></tr><tr><td>Scenario with large table</td><td>passed</td></tr><tr><td>Scenario with large table</td><td>passed</td></tr><tr><td>Scenario with large table no breakable</td><td>passed</td></tr><tr><td>Scenario with large table no breakable</td><td>passed</td></tr></tbody></table>
+
+
     
     <h3 class="title">Scenario Outline name &lt;test&gt;</h3>
 <p class="desc"></p>
@@ -100,16 +109,16 @@
 <p></p>
 <table class="results">
     <thead>
-        <th class="row heading">
+        <th class="row heading example-header">
             Header1
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             Header2
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             test
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             Outcome
         </th>
     </thead>
@@ -265,16 +274,16 @@
 <p></p>
 <table class="results">
     <thead>
-        <th class="row heading">
+        <th class="row heading example-header">
             Header1
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             Header2
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             test
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             Outcome
         </th>
     </thead>
@@ -350,16 +359,16 @@
 <p></p>
 <table class="results">
     <thead>
-        <th class="row heading">
+        <th class="row heading example-header">
             Header1
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             Header2
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             test
         </th>
-        <th class="row heading">
+        <th class="row heading example-header">
             Outcome
         </th>
     </thead>
@@ -407,6 +416,236 @@
                             </td>
                             <td>
                                 NotRun
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+    </tbody>
+</table>
+<h3 class="title">Scenario with large table</h3>
+<p class="desc"></p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row">
+            <td>
+                Given a fact with &#x27;&lt;Header1&gt;&#x27;
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>Example </h4>
+<p></p>
+<table class="results">
+    <thead>
+        <th class="row heading example-header">
+            Header1
+        </th>
+        <th class="row heading example-header">
+            Header2
+        </th>
+        <th class="row heading example-header">
+            test
+        </th>
+        <th class="row heading example-header">
+            a long column name
+        </th>
+        <th class="row heading example-header">
+            col2
+        </th>
+        <th class="row heading example-header">
+            a bit longer column name
+        </th>
+        <th class="row heading example-header">
+            very long column name
+        </th>
+        <th class="row heading example-header">
+            an other very long column name
+        </th>
+        <th class="row heading example-header">
+            A other exta long column name to test formating
+        </th>
+        <th class="row heading example-header">
+            Outcome
+        </th>
+    </thead>
+    <tbody>
+        <tr class="row bg_Passed">
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">3</td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 3&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+        <tr class="row bg_Passed">
+            <td style="text-align: center">Value 5</td>
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">4</td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 5&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+    </tbody>
+</table>
+<h3 class="title">Scenario with large table no breakable</h3>
+<p class="desc"></p>
+<table class="results">
+    <thead>
+        <tr class="row heading">
+            <th>Step</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row">
+            <td>
+                Given a fact with &#x27;&lt;Header1&gt;&#x27;
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>Example </h4>
+<p></p>
+<table class="results">
+    <thead>
+        <th class="row heading example-header">
+            Header1
+        </th>
+        <th class="row heading example-header">
+            Header2
+        </th>
+        <th class="row heading example-header">
+            test
+        </th>
+        <th class="row heading example-header">
+            a_long_column_name
+        </th>
+        <th class="row heading example-header">
+            col2
+        </th>
+        <th class="row heading example-header">
+            a_bit_longer_column_name
+        </th>
+        <th class="row heading example-header">
+            very_long_column_name
+        </th>
+        <th class="row heading example-header">
+            an_other_very_long_column_name
+        </th>
+        <th class="row heading example-header">
+            A_other_exta_long_column_name_to_test_formating
+        </th>
+        <th class="row heading example-header">
+            Outcome
+        </th>
+    </thead>
+    <tbody>
+        <tr class="row bg_Passed">
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">Value 3</td>
+            <td style="text-align: center">3</td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 3&#x27;
+                            </td>
+                            <td>
+                                Passed
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>            </td>
+        </tr>
+        <tr class="row bg_Passed">
+            <td style="text-align: center">Value 5</td>
+            <td style="text-align: center">Value 4</td>
+            <td style="text-align: center">4</td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td style="text-align: center"></td>
+            <td>
+                <table class="results">
+                    <thead>
+                        <tr class="row heading">
+                            <th>Step</th>
+                            <th>Outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row Passed" >
+                            <td>
+                                Given a fact with &#x27;Value 5&#x27;
+                            </td>
+                            <td>
+                                Passed
                             </td>
                         </tr>
                     </tbody>
