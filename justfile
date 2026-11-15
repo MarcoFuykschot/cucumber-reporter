@@ -15,6 +15,7 @@ test:
     cargo test --test typst_summary renders_background_and_rule_sections
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_without.pdf
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_withinfo.pdf --run-information features/reportinfo.yaml
+    cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_with_typst_info.pdf --run-information features/reportinfo-typst.yaml
     
 test-musl: build-musl
     target/x86_64-unknown-linux-musl/release/report-generator --spec-path "features/**/*.feature" --output-document docs/musl-report.pdf

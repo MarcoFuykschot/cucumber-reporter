@@ -33,11 +33,30 @@ author: "By someone"
 sub_title: "Subtile is a nice title"
 time_run: "2026-10-15T15:15:15Z"
 feature_introduction: "features/feature-introduction.md"
+title_page: "features/report-title-page.md"
+header: "features/report-header.md"
+footer: "features/report-footer.md"
 ```
 
 `feature_introduction` must be the path to an existing `.md`, `.typ`, or `.txt`
 file. Markdown files are rendered as Markdown, Typst files as Typst markup, and
 text files as plain text.
+
+The optional `title_page` value must point to an existing `.md` or `.typ` file.
+Its content replaces the default title-and-author page and can span multiple
+pages. Markdown files are rendered as Markdown and Typst files as Typst markup.
+When omitted, the default title page is used.
+
+The optional `header` and `footer` values must point to existing `.md` or `.typ`
+files. Their content is rendered in the header or footer on each PDF page,
+except for the title page. In experimental HTML output, the header appears
+after the contents list and the footer at the end of the document. Markdown
+files are rendered as Markdown and Typst files as Typst markup.
+
+A complete example using Typst files for the title page, header, and footer is
+available in [features/reportinfo-typst.yaml](features/reportinfo-typst.yaml).
+It includes a centered cover followed by a second page with an author,
+version, date, and change-history table.
 
 ### Example: PDF report with Cucumber JSON results
 

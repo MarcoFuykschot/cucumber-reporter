@@ -25,7 +25,7 @@
         columns: (auto, auto),
         gutter: 0.5em,
         align: (left, bottom),
-        [== #feature.name], if feature.outcome != none [#outcome(feature.outcome)] else [],
+        [== #feature.name]
       )
       #if index != none [
         #let feature-id = "feature-" + str(index)

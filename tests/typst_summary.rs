@@ -337,6 +337,151 @@ fn renders_feature_introduction_from_markdown_file() {
 }
 
 #[test]
+fn renders_header_and_footer_from_markdown_files() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-header-footer-{}.html",
+        std::process::id()
+    ));
+    let header_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-header-{}.md",
+        std::process::id()
+    ));
+    let footer_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-footer-{}.md",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    std::fs::write(&header_path, "**Markdown header**").unwrap();
+    std::fs::write(&footer_path, "*Markdown footer*").unwrap();
+    let run_info: ReportInfo = serde_yaml::from_str(&format!(
+        "header: '{}'\nfooter: '{}'",
+        header_path.display(),
+        footer_path.display()
+    ))
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("Markdown header"));
+    assert!(html.contains("Markdown footer"));
+    assert!(!html.contains("**Markdown header**"));
+    assert!(!html.contains("*Markdown footer*"));
+    let header_position = html.find("Markdown header").unwrap();
+    let contents_end = html.find("</nav>").unwrap();
+    let features_position = html.find("<h2 id=\"loc-1\">1. Features</h2>").unwrap();
+    assert!(contents_end < header_position);
+    assert!(header_position < features_position);
+
+    std::fs::remove_file(header_path).unwrap();
+    std::fs::remove_file(footer_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_custom_title_page_from_markdown_file() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-title-page-{}.html",
+        std::process::id()
+    ));
+    let title_page_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-title-page-{}.md",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    std::fs::write(&title_page_path, "# Custom title page\n\n**Custom author**").unwrap();
+    let run_info: ReportInfo = serde_yaml::from_str(&format!(
+        "title: 'Default report title'\nauthor: 'Default report author'\ntitle_page: '{}'",
+        title_page_path.display()
+    ))
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("Custom title page"));
+    assert!(html.contains("Custom author"));
+    assert!(!html.contains("<h1>Default report title</h1>"));
+    assert!(!html.contains("<p>Default report author</p>"));
+
+    std::fs::remove_file(title_page_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_typst_templates_from_reportinfo_yaml() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-typst-templates-{}.html",
+        std::process::id()
+    ));
+    let pdf_output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-typst-templates-{}.pdf",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    let report_info_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/reportinfo-typst.yaml");
+    let run_info: ReportInfo =
+        serde_yaml::from_str(&std::fs::read_to_string(report_info_path).unwrap()).unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("<strong>Typst title page example</strong>"));
+    assert!(html.contains("<strong>Typst header example</strong>"));
+    assert!(html.contains("<strong>Typst footer example</strong>"));
+    let history = html
+        .split("Document history</h2>")
+        .nth(1)
+        .unwrap()
+        .split("</table>")
+        .next()
+        .unwrap();
+    assert!(history.contains("<strong>Author</strong>"));
+    assert!(history.contains("<strong>Version</strong>"));
+    assert!(history.contains("<strong>Changes</strong>"));
+    assert!(history.contains("Initial draft"));
+    assert!(history.contains("Reviewed and approved for publication"));
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        pdf_output_path.to_str().unwrap(),
+        ReportFormat::Pdf,
+        &run_info,
+    )
+    .unwrap();
+    assert!(std::fs::metadata(&pdf_output_path).unwrap().len() > 0);
+
+    std::fs::remove_file(output_path).unwrap();
+    std::fs::remove_file(pdf_output_path).unwrap();
+}
+
+#[test]
 fn renders_feature_introduction_from_typst_file() {
     let output_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-introduction-typst-{}.html",

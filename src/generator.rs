@@ -93,6 +93,39 @@ pub(crate) trait GherkinToDict {
     fn to_dict(&self) -> Dict;
 }
 
+fn read_report_template(
+    field_name: &str,
+    path: Option<&str>,
+) -> anyhow::Result<Option<(String, &'static str)>> {
+    let Some(path) = path else {
+        return Ok(None);
+    };
+
+    let path = Path::new(path);
+    if !path.is_file() {
+        return Err(anyhow!(
+            "{field_name} must be a path to an existing Markdown (.md) or Typst (.typ) file: {}",
+            path.display()
+        ));
+    }
+
+    let format = path
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .map(str::to_ascii_lowercase);
+    let format = match format.as_deref() {
+        Some("md") => "markdown",
+        Some("typ") => "typst",
+        _ => {
+            return Err(anyhow!(
+                "{field_name} must be a Markdown (.md) or Typst (.typ) file: {}",
+                path.display()
+            ));
+        }
+    };
+
+    Ok(Some((std::fs::read_to_string(path)?, format)))
+}
 
 fn feature_to_dict(spec_file: &Path, results: Option<cucumber_json::Feature>) -> Option<Value> {
     match gherkin::Feature::parse_path(spec_file, gherkin::GherkinEnv::default()) {
@@ -208,6 +241,19 @@ impl ReportGenerator {
                 "feature_introduction_format".into(),
                 format.into_value(),
             );
+        }
+        for (field_name, path) in [
+            ("title_page", run_info.title_page.as_deref()),
+            ("header", run_info.header.as_deref()),
+            ("footer", run_info.footer.as_deref()),
+        ] {
+            if let Some((content, format)) = read_report_template(field_name, path)? {
+                run_info_dict.insert(field_name.into(), content.into_value());
+                run_info_dict.insert(
+                    format!("{field_name}_format").into(),
+                    format.into_value(),
+                );
+            }
         }
         inputs.insert("runinfo".into(), run_info_dict.into_value());
 

@@ -1,0 +1,5 @@
+title: "A Typst-templated report"
+author: "By someone"
+title_page: "features/report-title-page.typ"
+header: "features/report-header.typ"
+footer: "features/report-footer.typ"
