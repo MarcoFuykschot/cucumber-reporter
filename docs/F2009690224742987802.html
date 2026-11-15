@@ -2,72 +2,165 @@
 
 <head>
     <style>
-        .title { 
-            color: #004080;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #1f2937;
+            line-height: 1.5;
+            margin: 24px;
+            background: #f8fafc;
+        }
+
+        .title {
+            color: #0f172a;
+            border-bottom: 1px solid #dbe3ee;
+            padding-bottom: 8px;
+            margin: 0 0 14px;
+            font-size: 1.5rem;
+        }
+
+        .scenario-block {
+            margin-bottom: 28px;
+        }
+
+        .scenario-description,
+        .example-card {
+            margin: 12px 0 18px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .section-label {
+            display: inline-block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .scenario-description p,
+        .example-description {
+            margin: 0;
+            color: #334155;
+        }
+
+        .example-title {
+            margin: 0 0 8px;
+            color: #0f172a;
+            font-size: 1.1rem;
         }
 
         .desc {
             margin: 10px 0;
             line-height: 1.5;
         }
+
         .results {
             border-collapse: collapse;
             width: 100%;
-            margin: 2px 0;
+            margin: 10px 0 0;
+            background: #fff;
+            border: 1px solid #dfe7f1;
         }
+
         .row {
-            border: 1px solid #ddd;
-            padding: 2px;
+            border: 1px solid #dfe7f1;
+            padding: 0;
             text-align: left;
-        }
-       .datatable {
-            border-collapse:collapse;
-            margin: 10px 0;
-        }
-        .datarow {
-            border: 1px solid burlywood;
-            text-align: center;
-        }
-        .datacell {
-            border: 1px solid burlywood;
-            padding: 5px;
+            background: transparent;
         }
 
         .heading {
-            background-color: #f2f2f2;
+            background-color: #f3f6fa;
+            color: #334155;
+        }
+
+        .heading th {
+            padding: 10px 12px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .steps-table th,
+        .steps-table td,
+        .example-table th,
+        .example-table td {
+            padding: 10px 12px;
+            vertical-align: top;
+        }
+
+        .step-cell {
+            white-space: normal;
+        }
+
+        .step-indent {
+            display: inline-block;
+            margin-left: 18px;
+        }
+
+        .status-cell {
+            width: 110px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .datatable {
+            border-collapse: collapse;
+            margin: 10px 0 0 18px;
+            border: 1px solid #d6d3d1;
+            background: #f8fafc;
+        }
+
+        .datarow {
+            border: 1px solid #d6d3d1;
+            text-align: center;
+        }
+
+        .datacell {
+            border: 1px solid #d6d3d1;
+            padding: 6px 8px;
         }
 
         .example-header {
             overflow-wrap: anywhere;
+            white-space: nowrap;
+        }
+
+        .example-cell,
+        .example-outcome-cell {
+            text-align: left;
+            vertical-align: top;
         }
 
         .Failed {
-            color: firebrick
+            color: #b91c1c;
         }
 
         .Passed {
-            color: darkgreen
+            color: #166534;
         }
 
         .NotRun {
-            color: dimgray;
+            color: #64748b;
             font-style: italic;
         }
 
         .bg_Failed {
-            background: rgb(255, 255, 255);
-            background: radial-gradient(circle, rgba(255, 255, 255, 1) 75%, rgba(255, 0, 0, 1) 100%);
-            font-weight: bolder;
+            background: linear-gradient(90deg, rgba(254, 226, 226, 0.8), rgba(255, 255, 255, 1));
+            font-weight: 600;
         }
 
         .bg_Passed {
-            color: darkgreen
+            background: linear-gradient(90deg, rgba(220, 252, 231, 0.9), rgba(255, 255, 255, 1));
+            color: #166534;
         }
 
         .bg_NotRun {
-            color: dimgray;
+            color: #64748b;
             font-style: italic;
         }
     </style>
@@ -84,85 +177,85 @@
 
 
     
+    <section class="scenario-block">
     <h3 class="title">Scenario 1</h3>
-<p class="description"></p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-            <th>Outcome</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row Passed" >
-            <td>
-                Stel een feit
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                Als iets wordt uitgevoerd
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                Dan het resultaat is oke
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-    </tbody>
-</table><hr><h3 class="title">Scenario 2</h3>
-<p class="description"></p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-            <th>Outcome</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row Passed" >
-            <td>
-                Stel een feit
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                En een ander feit
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row Passed" >
-            <td>
-                Als iets wordt uitgevoerd
-            </td>
-            <td>
-                Passed
-            </td>
-        </tr>
-        <tr class="row NotRun" >
-            <td>
-                Als het resultaat is mislukt
-            </td>
-            <td>
-                NotRun
-            </td>
-        </tr>
-    </tbody>
-</table><hr>
+    <table class="results">
+        <thead>
+            <tr class="row heading">
+                <th>Step</th>
+                <th>Outcome</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row Passed" >
+                <td>
+                    Stel een feit
+                </td>
+                <td>
+                    Passed
+                </td>
+            </tr>
+            <tr class="row Passed" >
+                <td>
+                    Als iets wordt uitgevoerd
+                </td>
+                <td>
+                    Passed
+                </td>
+            </tr>
+            <tr class="row Passed" >
+                <td>
+                    Dan het resultaat is oke
+                </td>
+                <td>
+                    Passed
+                </td>
+            </tr>
+        </tbody>
+    </table></section><section class="scenario-block">
+    <h3 class="title">Scenario 2</h3>
+    <table class="results">
+        <thead>
+            <tr class="row heading">
+                <th>Step</th>
+                <th>Outcome</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row Passed" >
+                <td>
+                    Stel een feit
+                </td>
+                <td>
+                    Passed
+                </td>
+            </tr>
+            <tr class="row Passed" >
+                <td>
+                    En een ander feit
+                </td>
+                <td>
+                    Passed
+                </td>
+            </tr>
+            <tr class="row Passed" >
+                <td>
+                    Als iets wordt uitgevoerd
+                </td>
+                <td>
+                    Passed
+                </td>
+            </tr>
+            <tr class="row NotRun" >
+                <td>
+                    Als het resultaat is mislukt
+                </td>
+                <td>
+                    NotRun
+                </td>
+            </tr>
+        </tbody>
+    </table></section>
 </div>
 </body>
 

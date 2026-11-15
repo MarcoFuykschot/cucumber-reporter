@@ -1,51 +1,63 @@
-<h3 class="title">{{name}}</h3>
-<p class="desc">{{scenario_description}}</p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-        </tr>
-    </thead>
-    <tbody>
-        {{#each steps }}
-        <tr class="row">
-            <td>
-                {{#if is_and }}
-                <span style="margin-left: 10px;"> {{step_type}} {{step_template}} </span>
-                {{else}}
-                {{step_type}} {{step_template}}
-                {{/if}}
-            </td>
-        </tr>
-        {{/each}}
-    </tbody>
-</table>
+<section class="scenario-block">
+    <h3 class="title">{{name}}</h3>
+    {{#if scenario_description}}
+    <div class="scenario-description">
+        <span class="section-label">Scenario description</span>
+        <p>{{scenario_description}}</p>
+    </div>
+    {{/if}}
 
-{{#each examples}}
-<h4>Example {{name}}</h4>
-<p>{{description}}</p>
-<table class="results">
-    <thead>
-        {{#each headers}}
-        <th class="row heading example-header">
-            {{this}}
-        </th>
-        {{/each}}
-        <th class="row heading example-header">
-            Outcome
-        </th>
-    </thead>
-    <tbody>
-        {{#each rows}}
-        <tr class="row bg_{{example_state}}">
-            {{#each example}}
-            <td style="text-align: center">{{this}}</td>
+    <table class="results steps-table">
+        <thead>
+            <tr class="row heading">
+                <th scope="col">Step</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each steps }}
+            <tr class="row">
+                <td class="step-cell">
+                    {{#if is_and }}
+                    <span class="step-indent">{{step_type}} {{step_template}}</span>
+                    {{else}}
+                    {{step_type}} {{step_template}}
+                    {{/if}}
+                </td>
+            </tr>
             {{/each}}
-            <td>
-                {{> steps.html}}
-            </td>
-        </tr>
-        {{/each}}
-    </tbody>
-</table>
-{{/each}}
+        </tbody>
+    </table>
+
+    {{#each examples}}
+    <section class="example-card">
+        <h4 class="example-title">{{#if name}}Example: {{name}}{{else}}Example{{/if}}</h4>
+        {{#if description}}
+        <p class="example-description">{{description}}</p>
+        {{/if}}
+        <table class="results example-table">
+            <thead>
+                {{#each headers}}
+                <th class="row heading example-header">
+                    {{this}}
+                </th>
+                {{/each}}
+                <th class="row heading example-header">
+                    Outcome
+                </th>
+            </thead>
+            <tbody>
+                {{#each rows}}
+                <tr class="row bg_{{example_state}}">
+                    {{#each example}}
+                    <td class="example-cell">{{this}}</td>
+                    {{/each}}
+                    <td class="example-outcome-cell">
+                        {{> steps.html}}
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </section>
+    {{/each}}
+</section>

@@ -1,4 +1,10 @@
-<h3 class="title">{{name}}</h3>
-<p class="description">{{description}}</p>
-{{> steps.html }}
-<hr>
+<section class="scenario-block">
+    <h3 class="title">{{name}}</h3>
+    {{#if description}}
+    <div class="scenario-description">
+        <span class="section-label">Scenario description</span>
+        <p>{{description}}</p>
+    </div>
+    {{/if}}
+    {{> steps.html }}
+</section>
