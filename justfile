@@ -10,11 +10,12 @@ build-musl:
     cargo build --release --target x86_64-unknown-linux-musl
 
 test:
-    cargo test --test main -- --output-html-path docs/
-    cargo run --bin report-generator -- --spec-path "features/**/*.feature" --json-results-path target/results.json --output-document docs/report_with_result.pdf
+    cargo test --lib
+    cargo test --test typst_summary replaces_underscores_in_table_cells
+    cargo test --test typst_summary renders_background_and_rule_sections
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_without.pdf
     cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_withinfo.pdf --run-information features/reportinfo.yaml
-    cargo run --bin report-generator -- --spec-path "features/**/*.feature" --json-results-path target/results.json --output-document docs/report_with_result.html --report-format html
+    cargo run --bin report-generator -- --spec-path "features/**/*.feature" --output-document docs/report_with_typst_info.pdf --run-information features/reportinfo-typst.yaml
     
 test-musl: build-musl
     target/x86_64-unknown-linux-musl/release/report-generator --spec-path "features/**/*.feature" --output-document docs/musl-report.pdf
@@ -28,9 +29,6 @@ check:
 
 docs:
     cargo doc --no-deps --document-private-items
-
-test-template:
-    cargo test --test main -- --output-html-path docs/ --template-dir tests/template_dark_mode_example/
 
 download-meta:
     curl -o schemas/gherkin-languages.json https://raw.githubusercontent.com/cucumber/gherkin/refs/heads/main/gherkin-languages.json

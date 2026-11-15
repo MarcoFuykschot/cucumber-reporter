@@ -1,4 +1,3 @@
-use minify_html::{Cfg, minify};
 use regex::Regex;
 use std::{error::Error, fs::File, io::Read, os::unix::fs::FileExt};
 
@@ -25,23 +24,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 format!("<!--CONTENT-START:{filename}:{code}-->")
             };
 
-            let file_content = if code.is_empty() {
-                let mut cfg = Cfg::new();
-                cfg.minify_css = true;
-                cfg.keep_closing_tags = true;
-                cfg.keep_html_and_head_opening_tags = true;
-                let minified = minify(file_content.as_bytes(), &cfg);
-                String::from_utf8(minified)?
-            } else {
-                file_content
-            };
-
             let end_marker = format!("<!--CONTENT-END:{filename}-->");
-            let replace_value = if code.is_empty() {
-                format!("{start_marker}\r\n{file_content}\r\n{end_marker}")
-            } else {
-                format!("{start_marker}\r\n```{code}\r\n{file_content}\r\n```\r\n{end_marker}")
-            };
+            let replace_value =
+                format!("{start_marker}\r\n```{code}\r\n{file_content}\r\n```\r\n{end_marker}");
 
             if let Some(start) = content.find(&start_marker)
                 && let Some(end) = content.find(&end_marker)

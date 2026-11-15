@@ -30,29 +30,117 @@ impl FeatureInfo {
         }
     }
 
+    fn error_details(&self) -> Vec<(String, String)> {
+        self.results
+            .as_ref()
+            .map(|results| {
+                results
+                    .elements
+                    .iter()
+                    .flat_map(|element| {
+                        let scenario_name = result_scenario_name(&element.name).to_string();
+
+                        element.steps.iter().filter_map(move |step| {
+                            step.result
+                                .error_message
+                                .clone()
+                                .map(|message| (scenario_name.clone(), message))
+                        })
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    fn scenario_infos(&self) -> Vec<(Option<usize>, ScenarioInfo)> {
+        let mut scenarios = self
+            .feature
+            .scenarios
+            .iter()
+            .map(|scenario| (None, self.scenario_info(scenario)))
+            .collect::<Vec<_>>();
+
+        for (index, rule) in self.feature.rules.iter().enumerate() {
+            for scenario in &rule.scenarios {
+                scenarios.push((Some(index + 1), self.scenario_info(scenario)));
+            }
+        }
+
+        scenarios
+    }
+
+    fn summary_rows(&self, scenario_infos: &[(Option<usize>, ScenarioInfo)]) -> Vec<Value> {
+        let mut rows = scenario_infos
+            .iter()
+            .map(|(rule_number, info)| {
+                let errors = info
+                    .results
+                    .iter()
+                    .flatten()
+                    .flat_map(|result| &result.steps)
+                    .filter_map(|step| step.result.error_message.as_deref())
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                scenario_summary_row(*rule_number, &info.scenario.name, info.outcome(), errors)
+            })
+            .collect::<Vec<_>>();
+
+        if let Some(results) = &self.results {
+            for element in &results.elements {
+                let matches_scenario = scenario_infos
+                    .iter()
+                    .any(|(_, info)| info.result_matches(element));
+                if matches_scenario {
+                    continue;
+                }
+
+                let scenario_name = result_scenario_name(&element.name);
+                for step in &element.steps {
+                    if let Some(message) = &step.result.error_message {
+                        rows.push(scenario_summary_row(
+                            None,
+                            scenario_name,
+                            Some(cucumber_json::Status::Failed),
+                            message.clone(),
+                        ));
+                    }
+                }
+            }
+        }
+
+        rows
+    }
+
     fn get_scenario_info(&self, info: &gherkin::Scenario) -> Value {
-        let scenario_info = ScenarioInfo {
-            scenario: info.clone(),
+        self.scenario_info(info).to_dict().into_value()
+    }
+
+    fn scenario_info(&self, scenario: &gherkin::Scenario) -> ScenarioInfo {
+        let matcher = ScenarioInfo {
+            scenario: scenario.clone(),
             results: None,
         };
-
-        let results = if let Some(results) = &self.results {
+        let results = self.results.as_ref().map(|results| {
             results
                 .elements
                 .iter()
-                .filter(|result| scenario_info.result_matches(result))
+                .filter(|result| matcher.result_matches(result))
                 .cloned()
-                .collect::<Vec<_>>()
-                .into()
-        } else {
-            None
-        };
+                .collect()
+        });
 
-        let scenario_info = ScenarioInfo {
-            scenario: info.clone(),
+        ScenarioInfo {
+            scenario: scenario.clone(),
             results,
-        };
-        scenario_info.to_dict().into_value()
+        }
+    }
+}
+
+fn result_scenario_name(name: &str) -> &str {
+    if name.trim().is_empty() {
+        "Feature parse error"
+    } else {
+        name
     }
 }
 
@@ -71,6 +159,27 @@ fn combine_outcomes(
     }
 }
 
+fn replace_table_cell_characters(cell: &str, characters: &[char]) -> String {
+    characters.iter().fold(cell.to_string(), |cell, character| {
+        cell.replace(*character, " ")
+    })
+}
+
+fn scenario_summary_row(
+    rule_number: Option<usize>,
+    scenario: &str,
+    outcome: Option<cucumber_json::Status>,
+    errors: String,
+) -> Value {
+    dict! {
+        "rule" => rule_number.map_or_else(|| Value::None, |number| number.to_string().into_value()),
+        "scenario" => scenario.to_string(),
+        "outcome" => outcome.map_or_else(|| Value::None, |status| status.to_string().into_value()),
+        "errors" => errors,
+    }
+    .into_value()
+}
+
 impl GherkinToDict for FeatureInfo {
     fn to_dict(&self) -> Dict {
         let scenarios_dict = Array::from_iter(
@@ -80,30 +189,15 @@ impl GherkinToDict for FeatureInfo {
                 .map(|info| self.get_scenario_info(info)),
         );
 
-        let error_details = self
-            .results
-            .as_ref()
-            .map(|results| {
-                results
-                    .elements
-                    .iter()
-                    .flat_map(|element| {
-                        let scenario_name = if element.name.trim().is_empty() {
-                            "Feature parse error".to_string()
-                        } else {
-                            element.name.clone()
-                        };
-
-                        element.steps.iter().filter_map(move |step| {
-                            step.result.error_message.clone().map(|message| {
-                                (scenario_name.clone(), message)
-                            })
-                        })
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
+        let error_details = self.error_details();
         let error_message = error_details.first().map(|(_, message)| message.clone());
+        let has_rule_scenarios = self
+            .feature
+            .rules
+            .iter()
+            .any(|rule| !rule.scenarios.is_empty());
+        let scenario_infos = self.scenario_infos();
+        let summary_rows = self.summary_rows(&scenario_infos);
 
         dict! {
             "name" => self.feature.name.clone(),
@@ -122,6 +216,8 @@ impl GherkinToDict for FeatureInfo {
                 .into_value()
             })),
             "error_message" => error_message.map_or_else(|| Value::None, |message| message.into_value()),
+            "has_rule_scenarios" => has_rule_scenarios,
+            "summary_rows" => Array::from_iter(summary_rows),
         }
     }
 }
@@ -247,7 +343,7 @@ impl RuleInfo {
 
 impl GherkinToDict for RuleInfo {
     fn to_dict(&self) -> Dict {
-        debug!("{:?}",self.rule.description);
+        debug!("{:?}", self.rule.description);
         dict! {
             "name" => self.rule.name.clone(),
             "description" => self.rule.description.as_ref().map_or_else(|| Value::None, |d| Value::Str(d.clone().into())),
@@ -333,7 +429,9 @@ impl GherkinToDict for ExampleInfo {
 
                     let mut values = row.to_vec();
                     if self.result.is_some() {
-                        values.push(outcome.map_or_else(|| "".to_string(), |status| status.to_string()));
+                        values.push(
+                            outcome.map_or_else(|| "".to_string(), |status| status.to_string()),
+                        );
                         values.push(error_message);
                     }
                     values
@@ -344,7 +442,10 @@ impl GherkinToDict for ExampleInfo {
                 "name" => self.example.name.clone(),
                 "columns" => colums + if self.result.is_some() { 2 } else { 0 },
                 "rows" => Array::from_iter(rows.iter().map(|row| {
-                    Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
+                    Array::from_iter(row.iter().map(|cell| {
+                        replace_table_cell_characters(cell, &['_']).into_value()
+                    }))
+                    .into_value()
                 })),
                 "tags" => self.example.tags.clone()
             }
@@ -365,7 +466,11 @@ pub struct ReportInfo {
     pub(crate) sub_title: Option<String>,
     pub(crate) time_run: Option<DateTime<Utc>>,
     // A markdown string or filename to a markdown file that will be used as an introduction to the feature chapter
-    pub (crate) feature_introduction: Option<String>,
+    pub(crate) feature_introduction: Option<String>,
+    // Markdown files used for the title page, page header, and footer
+    pub(crate) title_page: Option<String>,
+    pub(crate) header: Option<String>,
+    pub(crate) footer: Option<String>,
 }
 
 impl Default for ReportInfo {
@@ -377,9 +482,11 @@ impl Default for ReportInfo {
                 .unwrap_or_else(|_| "Unknown".to_string()),
             sub_title: Default::default(),
             time_run: chrono::Local::now().to_utc().into(),
-            feature_introduction: None
+            feature_introduction: None,
+            title_page: None,
+            header: None,
+            footer: None,
         }
-        
     }
 }
 
@@ -389,7 +496,10 @@ impl GherkinToDict for ReportInfo {
             "title" => self.title.clone(),
             "author" => self.author.clone(),
             "sub_title" => self.sub_title.clone().map_or_else(|| Value::None, |s| s.clone().into_value()),
-            "time_run" => self.time_run.map_or_else(|| Value::None, |s| ReportGenerator::typst_datetime(  s).into_value() )
+            "time_run" => self.time_run.map_or_else(|| Value::None, |s| ReportGenerator::typst_datetime(  s).into_value() ),
+            "title_page" => self.title_page.clone(),
+            "header" => self.header.clone(),
+            "footer" => self.footer.clone(),
         }
     }
 }
@@ -398,8 +508,7 @@ impl GherkinToDict for Background {
     fn to_dict(&self) -> Dict {
         let description = if let Some(description) = &self.description {
             description.replace("\n", "\r\n").into()
-        }
-        else {
+        } else {
             None
         };
         dict! {
@@ -422,8 +531,24 @@ impl GherkinToDict for Table {
         dict! {
             "columns" => self.row_width(),
             "rows" => Array::from_iter(self.rows.iter().map(|row| {
-                Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
+                Array::from_iter(row.iter().map(|cell| {
+                    replace_table_cell_characters(cell, &['_']).into_value()
+                }))
+                .into_value()
             })),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::replace_table_cell_characters;
+
+    #[test]
+    fn replaces_configured_characters_in_table_cells() {
+        assert_eq!(
+            replace_table_cell_characters("long_cell-with_symbols", &['_', '-']),
+            "long cell with symbols"
+        );
     }
 }

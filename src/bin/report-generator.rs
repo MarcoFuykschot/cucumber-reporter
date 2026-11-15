@@ -23,8 +23,7 @@ struct Args {
     run_information: Option<String>,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     // init tracing subscriber
     tracing_subscriber::fmt()

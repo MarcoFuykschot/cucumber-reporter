@@ -1,18 +1,37 @@
 #import sys: inputs, version
 #import "@preview/in-dexter:0.7.2": *
+#import "feature.typ": *
+#import "styles.typ": render_markdown, render_table_header
+
+#let runinfo = inputs.at("runinfo", default: {})
+#let is-html = inputs.at("is_html", default: false)
+#let render_runinfo_content(field) = {
+  let content = runinfo.at(field, default: none)
+  let format = runinfo.at(field + "_format", default: "markdown")
+  if content == none {
+    []
+  } else if format == "typst" {
+    eval(content, mode: "markup")
+  } else {
+    render_markdown(content)
+  }
+}
+#let render_page_content(field) = context {
+  let page_number = counter(page).get().first()
+  if page_number > 1 { render_runinfo_content(field) } else { [] }
+}
 
 #set page(
   paper: "a4",
-  margin: (top: 2cm, bottom: 2cm, left: 1.5cm, right: 1.5cm),
+  margin: (top: 1.5cm, bottom: 1.5cm, left: 1.2cm, right: 1.2cm),
+  header: if is-html { [] } else { render_page_content("header") },
+  footer: if is-html { [] } else { render_page_content("footer") },
 )
 
 #set text(font: "New Computer Modern", size: 11pt)
 #set heading(numbering: "1.")
 
-#import "feature.typ": *
-#import "styles.typ": render_markdown
-
-#let runinfo = inputs.at("runinfo", default: {})
+#show table.cell: set text(hyphenate: true)
 
 #if runinfo != none {
   set document(
@@ -20,16 +39,27 @@
     author: runinfo.author,
   )
 
-  align(center)[
-    #title([#runinfo.title])
-    #runinfo.author
-  ]
+  let title-page = runinfo.at("title_page", default: none)
+  if title-page == none {
+    align(center)[
+      #title([#runinfo.title])
+      #runinfo.author
+    ]
+  } else if runinfo.at("title_page_format", default: "markdown") == "typst" {
+    eval(title-page, mode: "markup")
+  } else {
+    render_markdown(title-page)
+  }
 
   pagebreak()
 }
 
 #outline()
 #pagebreak()
+
+#if is-html and runinfo.at("header", default: none) != none [
+  #render_runinfo_content("header")
+]
 
 #let features = inputs.at("features", default: ())
 
@@ -60,10 +90,10 @@
   })
   #table(
     columns: (1fr, auto),
-    inset: 7pt,
+    inset: 4pt,
     align: left,
     stroke: table_stroke,
-    [Feature], [Outcome],
+    render_table_header([Feature]), render_table_header([Result]),
     ..summary_rows.flatten(),
   )
   #pagebreak()
@@ -82,4 +112,8 @@
 = Tag index
 #columns(2)[
   #make-index(title: none,outlined: true )
+]
+
+#if is-html and runinfo.at("footer", default: none) != none [
+  #render_runinfo_content("footer")
 ]

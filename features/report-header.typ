@@ -1,0 +1,1 @@
+#strong[Typst header example]

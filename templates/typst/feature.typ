@@ -4,6 +4,8 @@
 #import "scenario.typ": *
 #import "styles.typ": *
 
+#show table.cell: set text(hyphenate: true)
+
 #let render_feature(feature, index: none) = {
   let render_element(element, level: 3) = {
     if element.keyword == "Scenario" {
@@ -23,7 +25,7 @@
         columns: (auto, auto),
         gutter: 0.5em,
         align: (left, bottom),
-        [== #feature.name], if feature.outcome != none [#outcome(feature.outcome)] else [],
+        [== #feature.name]
       )
       #if index != none [
         #let feature-id = "feature-" + str(index)
@@ -34,53 +36,66 @@
 
       #render_description(feature.description)
 
-      #let rules_table = feature.rules.map(rule => {
-        ([#rule.name], if rule.outcome != none [#outcome(rule.outcome)] else [])
+      #let rules_table = feature.rules.enumerate().map(((rule-index, rule)) => {
+        (
+          [#(rule-index + 1)],
+          [#rule.name],
+          if rule.outcome != none [#outcome(rule.outcome)] else [],
+        )
       })
+      #let has-rule-scenarios = feature.has_rule_scenarios
       #if rules_table.len() > 0 [
         === Rules summary
         #table(
-          columns: (1fr, auto),
-          inset: 6pt,
+          columns: (auto, 1fr, auto),
+          inset: 4pt,
           stroke: table_stroke,
-          [Rule], [Outcome],
+          render_table_header([\#]),
+          render_table_header([Rule]),
+          render_table_header([Result]),
           ..rules_table.flatten(),
         )
       ]
 
-      #let summary_rows = (
-        feature.scenarios.map(scenario => {
-          let errors = feature
-            .errors
-            .filter(error => error.scenario == scenario.name)
-            .map(error => error.message)
-            .join("\n")
-          ([#scenario.name], if scenario.outcome != none [#outcome(scenario.outcome)] else [], [#errors])
-        })
-          + feature
-            .rules
-            .map(rule => rule.scenarios.map(scenario => {
-              let errors = feature
-                .errors
-                .filter(error => error.scenario == scenario.name)
-                .map(error => error.message)
-                .join("\n")
-              (
-                [#rule.name - #scenario.name],
-                if scenario.outcome != none [#outcome(scenario.outcome)] else [],
-                [#errors],
-              )
-            }))
-            .flatten()
-          + feature.errors.map(error => ([#error.scenario], [#outcome("failed")], [#error.message]))
-      )
+      #let summary_rows = feature.summary_rows.map(row => {
+        let result = if row.outcome != none [#outcome(row.outcome)] else []
+        let errors = [#row.errors]
+        if has-rule-scenarios {
+          if row.rule == none {
+            (table.cell(colspan: 2)[#row.scenario], result, errors)
+          } else {
+            ([#row.rule], [#row.scenario], result, errors)
+          }
+        } else {
+          ([#row.scenario], result, errors)
+        }
+      })
       #if summary_rows.len() > 0 [
         === Scenario summary
+        #let summary-columns = if has-rule-scenarios {
+          (auto, 1fr, auto, 1.5fr)
+        } else {
+          (1fr, auto, 1.5fr)
+        }
+        #let summary-headers = if has-rule-scenarios {
+          (
+            render_table_header([Rule]),
+            render_table_header([Scenario]),
+            render_table_header([Result]),
+            render_table_header([Errors]),
+          )
+        } else {
+          (
+            render_table_header([Scenario]),
+            render_table_header([Result]),
+            render_table_header([Errors]),
+          )
+        }
         #table(
-          columns: (1fr, auto, 1.5fr),
-          inset: 6pt,
+          columns: summary-columns,
+          inset: 4pt,
           stroke: table_stroke,
-          [Scenario], [Outcome], [Errors],
+          ..summary-headers,
           ..summary_rows.flatten(),
         )
       ]

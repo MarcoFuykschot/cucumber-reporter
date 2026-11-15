@@ -23,7 +23,49 @@ fn exports_typst_as_html() {
     let html = std::fs::read_to_string(&output_path).unwrap();
     assert!(html.starts_with("<!DOCTYPE html>"));
     assert!(html.contains("Scenario 1"));
+    assert!(html.contains("<td>Scenario</td><td>Outcome</td><td>Errors</td>"));
+    assert!(!html.contains("<td>Rule</td><td>Scenario</td>"));
+    assert!(html.contains("<tr><td>Scenario 1</td>"));
 
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn hides_rule_cell_for_standalone_scenarios_in_mixed_summary() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-html-mixed-summary-{}.html",
+        std::process::id()
+    ));
+    let spec_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-mixed-summary-{}.feature",
+        std::process::id()
+    ));
+    std::fs::write(
+        &spec_path,
+        "Feature: mixed scenarios\n\
+         Scenario: Standalone scenario\n\
+           Given a fact\n\
+         Rule: A rule\n\
+           Scenario: Nested scenario\n\
+             Given a fact\n",
+    )
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("<td>Rule</td><td>Scenario</td><td>Outcome</td><td>Errors</td>"));
+    assert!(html.contains("<td colspan=\"2\">Standalone scenario</td>"));
+    assert!(html.contains("<td>1</td><td>Nested scenario</td>"));
+
+    std::fs::remove_file(spec_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
 }
 
@@ -49,9 +91,14 @@ fn includes_feature_summary_and_rules_list_in_html() {
     assert!(html.contains("Scenario summary"));
     assert!(html.contains("<td>Outcome</td>"));
     assert!(html.contains("rule 1</td>"));
-    assert!(html.contains("rule 1 - Scenario 1"));
-    assert!(html.contains("<td>rule 1</td><td></td>"));
-    assert!(html.contains("<td>rule 1 - Scenario 1</td><td></td>"));
+    assert!(html.contains("<td>Number</td><td>Rule</td><td>Outcome</td>"));
+    assert!(html.contains("<td>1</td><td>rule 1</td>"));
+    assert!(html.contains("<td>2</td><td>rule 2</td>"));
+    assert!(html.contains("<td>Rule</td><td>Scenario</td><td>Outcome</td>"));
+    assert!(html.contains("<td>1</td><td>Scenario 1</td>"));
+    assert!(html.contains("<td>1</td><td>rule 1</td><td></td>"));
+    assert!(html.contains("<tr><td>1</td><td>Scenario 1</td><td>"));
+    assert!(html.contains("<tr><td>2</td><td>Scenario 1</td><td>"));
     assert!(html.contains("Scenario description"));
     assert!(html.contains("Description test scenario"));
     assert!(html.contains("Description of a rule"));
@@ -60,7 +107,7 @@ fn includes_feature_summary_and_rules_list_in_html() {
 }
 
 #[test]
-fn calculates_rule_outcomes_from_results_in_rust() {
+fn matches_rule_prefixed_results_and_errors_without_duplicate_summary_rows() {
     let output_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-rule-outcomes-{}.html",
         std::process::id()
@@ -86,14 +133,18 @@ fn calculates_rule_outcomes_from_results_in_rust() {
                   "type": "scenario",
                   "id": "scenario-1",
                   "line": 6,
-                  "name": "Scenario 1",
+                  "name": "rule 1 Scenario 1",
                   "tags": [],
                   "steps": [
                     {
                       "keyword": "Given",
                       "line": 7,
                       "name": "a fact",
-                      "result": { "status": "failed", "duration": 0 }
+                      "result": {
+                        "status": "failed",
+                        "duration": 0,
+                        "error_message": "First rule failure"
+                      }
                     }
                   ]
                 },
@@ -102,14 +153,18 @@ fn calculates_rule_outcomes_from_results_in_rust() {
                   "type": "scenario",
                   "id": "scenario-2",
                   "line": 34,
-                  "name": "Scenario 1",
+                  "name": "rule 2 Scenario 1",
                   "tags": [],
                   "steps": [
                     {
                       "keyword": "Given",
                       "line": 35,
                       "name": "a fact",
-                      "result": { "status": "skipped", "duration": 0 }
+                      "result": {
+                        "status": "skipped",
+                        "duration": 0,
+                        "error_message": "Second rule skipped"
+                      }
                     }
                   ]
                 }
@@ -129,11 +184,118 @@ fn calculates_rule_outcomes_from_results_in_rust() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
-    assert!(html.contains("<td>rule 1</td><td>failed</td>"));
-    assert!(html.contains("<td>rule 2</td><td>skipped</td>"));
-    assert!(html.contains("<td>rule 1 - Scenario 1</td><td>failed</td>"));
-    assert!(html.contains("<td>rule 2 - Scenario 1</td><td>skipped</td>"));
+    assert!(html.contains("<td>1</td><td>rule 1</td><td>failed</td>"));
+    assert!(html.contains("<td>2</td><td>rule 2</td><td>skipped</td>"));
+    assert!(html.contains("<td>1</td><td>Scenario 1</td><td>failed</td>"));
+    assert!(html.contains("<td>2</td><td>Scenario 1</td><td>skipped</td>"));
+    let summary = html
+        .split("Scenario summary</h4>")
+        .nth(1)
+        .unwrap()
+        .split("</table>")
+        .next()
+        .unwrap();
+    assert!(summary.contains(
+        "<td>1</td><td>Scenario 1</td><td>failed</td><td>First rule failure</td>"
+    ));
+    assert!(summary.contains(
+        "<td>2</td><td>Scenario 1</td><td>skipped</td><td>Second rule skipped</td>"
+    ));
+    assert_eq!(summary.matches("<tr>").count(), 4);
+    assert_eq!(summary.matches("First rule failure").count(), 1);
+    assert_eq!(summary.matches("Second rule skipped").count(), 1);
 
+    std::fs::remove_file(results_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn groups_outline_errors_and_preserves_unmatched_errors_in_summary() {
+    let base_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-outline-summary-{}",
+        std::process::id()
+    ));
+    let spec_path = base_path.with_extension("feature");
+    let results_path = base_path.with_extension("json");
+    let output_path = base_path.with_extension("html");
+    std::fs::write(
+        &spec_path,
+        "Feature: Outline summary\n\
+         Scenario: Shared name\n\
+           Given a fact\n\
+         Rule: A rule\n\
+           Scenario Outline: Shared name\n\
+             Given value <value>\n\
+             Examples:\n\
+               | value |\n\
+               | first |\n\
+               | second |\n",
+    )
+    .unwrap();
+    let elements = [
+        (2, "Shared name", "Standalone failure"),
+        (9, "A rule Shared name", "First example failure"),
+        (10, "A rule Shared name", "Second example failure"),
+        (0, "Shared name", "Unmatched failure"),
+    ]
+    .map(|(line, name, message)| {
+        serde_json::json!({
+            "keyword": "Scenario",
+            "type": "scenario",
+            "id": format!("scenario-{line}"),
+            "line": line,
+            "name": name,
+            "tags": [],
+            "steps": [{
+                "keyword": "Given",
+                "line": line,
+                "name": "a fact",
+                "result": {
+                    "status": "failed",
+                    "duration": 0,
+                    "error_message": message
+                }
+            }]
+        })
+    });
+    let results = serde_json::json!([{
+        "uri": spec_path.file_name().unwrap().to_str().unwrap(),
+        "keyword": "Feature",
+        "name": "Outline summary",
+        "tags": [],
+        "elements": elements
+    }]);
+    std::fs::write(&results_path, results.to_string()).unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &Some(vec![results_path.clone()]),
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    let summary = html
+        .split("Scenario summary</h4>")
+        .nth(1)
+        .unwrap()
+        .split("</table>")
+        .next()
+        .unwrap();
+    assert!(summary.contains(
+        "<td colspan=\"2\">Shared name</td><td>failed</td><td>Standalone failure</td>"
+    ));
+    assert!(summary.contains(
+        "<td>1</td><td>Shared name</td><td>failed</td><td>First example failure<br>Second example failure</td>"
+    ));
+    assert!(summary.contains(
+        "<td colspan=\"2\">Shared name</td><td>failed</td><td>Unmatched failure</td>"
+    ));
+    assert_eq!(summary.matches("<tr>").count(), 4);
+
+    std::fs::remove_file(spec_path).unwrap();
     std::fs::remove_file(results_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
 }
@@ -172,6 +334,151 @@ fn renders_feature_introduction_from_markdown_file() {
 
     std::fs::remove_file(introduction_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_header_and_footer_from_markdown_files() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-header-footer-{}.html",
+        std::process::id()
+    ));
+    let header_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-header-{}.md",
+        std::process::id()
+    ));
+    let footer_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-footer-{}.md",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    std::fs::write(&header_path, "**Markdown header**").unwrap();
+    std::fs::write(&footer_path, "*Markdown footer*").unwrap();
+    let run_info: ReportInfo = serde_yaml::from_str(&format!(
+        "header: '{}'\nfooter: '{}'",
+        header_path.display(),
+        footer_path.display()
+    ))
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("Markdown header"));
+    assert!(html.contains("Markdown footer"));
+    assert!(!html.contains("**Markdown header**"));
+    assert!(!html.contains("*Markdown footer*"));
+    let header_position = html.find("Markdown header").unwrap();
+    let contents_end = html.find("</nav>").unwrap();
+    let features_position = html.find("<h2 id=\"loc-1\">1. Features</h2>").unwrap();
+    assert!(contents_end < header_position);
+    assert!(header_position < features_position);
+
+    std::fs::remove_file(header_path).unwrap();
+    std::fs::remove_file(footer_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_custom_title_page_from_markdown_file() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-title-page-{}.html",
+        std::process::id()
+    ));
+    let title_page_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-title-page-{}.md",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    std::fs::write(&title_page_path, "# Custom title page\n\n**Custom author**").unwrap();
+    let run_info: ReportInfo = serde_yaml::from_str(&format!(
+        "title: 'Default report title'\nauthor: 'Default report author'\ntitle_page: '{}'",
+        title_page_path.display()
+    ))
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("Custom title page"));
+    assert!(html.contains("Custom author"));
+    assert!(!html.contains("<h1>Default report title</h1>"));
+    assert!(!html.contains("<p>Default report author</p>"));
+
+    std::fs::remove_file(title_page_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_typst_templates_from_reportinfo_yaml() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-typst-templates-{}.html",
+        std::process::id()
+    ));
+    let pdf_output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-typst-templates-{}.pdf",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-simple.feature");
+    let report_info_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/reportinfo-typst.yaml");
+    let run_info: ReportInfo =
+        serde_yaml::from_str(&std::fs::read_to_string(report_info_path).unwrap()).unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("<strong>Typst title page example</strong>"));
+    assert!(html.contains("<strong>Typst header example</strong>"));
+    assert!(html.contains("<strong>Typst footer example</strong>"));
+    let history = html
+        .split("Document history</h2>")
+        .nth(1)
+        .unwrap()
+        .split("</table>")
+        .next()
+        .unwrap();
+    assert!(history.contains("<strong>Author</strong>"));
+    assert!(history.contains("<strong>Version</strong>"));
+    assert!(history.contains("<strong>Changes</strong>"));
+    assert!(history.contains("Initial draft"));
+    assert!(history.contains("Reviewed and approved for publication"));
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        pdf_output_path.to_str().unwrap(),
+        ReportFormat::Pdf,
+        &run_info,
+    )
+    .unwrap();
+    assert!(std::fs::metadata(&pdf_output_path).unwrap().len() > 0);
+
+    std::fs::remove_file(output_path).unwrap();
+    std::fs::remove_file(pdf_output_path).unwrap();
 }
 
 #[test]
@@ -405,13 +712,23 @@ fn includes_multiple_feature_errors_in_typst_output() {
     assert!(html.contains("Errors"));
     assert!(html.contains("First error message"));
     assert!(html.contains("Second error message"));
+    let summary = html
+        .split("Scenario summary</h4>")
+        .nth(1)
+        .unwrap()
+        .split("</table>")
+        .next()
+        .unwrap();
+    assert_eq!(summary.matches("<td>Scenario 1</td>").count(), 1);
+    assert_eq!(summary.matches("First error message").count(), 1);
+    assert_eq!(summary.matches("Second error message").count(), 1);
 
     std::fs::remove_file(&results_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
 }
 
 #[test]
-fn includes_outline_error_column_in_typst_output() {
+fn omits_step_outcome_column_for_outline_in_typst_output() {
     let output_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-outline-error-{}.html",
         std::process::id()
@@ -471,23 +788,25 @@ fn includes_outline_error_column_in_typst_output() {
     let html = std::fs::read_to_string(&output_path).unwrap();
     assert!(html.contains("Error"));
     assert!(html.contains("Example row failed: Header1=Value 2"));
+    assert!(html.contains("<td>Keyword</td><td>Step</td>"));
+    assert!(!html.contains("<td>Keyword</td><td>Step</td><td>Outcome</td>"));
 
     std::fs::remove_file(&results_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
 }
 
 #[test]
-fn rotates_overlapping_table_headers_in_steps_and_examples() {
+fn replaces_underscores_in_table_cells() {
     let output_path = std::env::temp_dir().join(format!(
-        "cucumber-reporter-rotated-headers-{}.pdf",
+        "cucumber-reporter-table-cells-{}.pdf",
         std::process::id()
     ));
     let html_output_path = std::env::temp_dir().join(format!(
-        "cucumber-reporter-rotated-headers-{}.html",
+        "cucumber-reporter-table-cells-{}.html",
         std::process::id()
     ));
     let spec_path = std::env::temp_dir().join(format!(
-        "cucumber-reporter-rotated-headers-{}.feature",
+        "cucumber-reporter-table-cells-{}.feature",
         std::process::id()
     ));
     std::fs::write(
@@ -495,12 +814,12 @@ fn rotates_overlapping_table_headers_in_steps_and_examples() {
         "Feature: Wide table headers\n\
          Scenario: Step table\n\
          Given values\n\
-         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating |\n\
-         | Value 1 | Value 2 | 3 | | | | | | |\n\
+         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating | a_very_long_unbreakable_column_name_to_force_wrapping |\n\
+         | Value 1 | Value 2 | 3 | | | | | | | a_value_without_spaces |\n\
          Scenario Outline: Examples table\n\
          Given a value\n\
          Examples:\n\
-         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating | a_very_long_unbreakable_column_name_to_force_rotation |\n\
+         | Header1 | Header2 | test | a long column name | col2 | a bit longer column name | very long column name | an other very long column name | A other exta long column name to test formating | a_very_long_unbreakable_column_name_to_force_wrapping |\n\
          | Value 1 | Value 2 | 3 | | | | | | | |\n",
     )
     .unwrap();
@@ -528,6 +847,12 @@ fn rotates_overlapping_table_headers_in_steps_and_examples() {
 
     let html = std::fs::read_to_string(&html_output_path).unwrap();
     assert!(html.matches("A other exta long column name to test formating").count() >= 2);
+    assert!(
+        html.matches("a very long unbreakable column name to force wrapping")
+            .count()
+            >= 2
+    );
+    assert!(html.contains("a value without spaces"));
 
     std::fs::remove_file(spec_path).unwrap();
     std::fs::remove_file(output_path).unwrap();

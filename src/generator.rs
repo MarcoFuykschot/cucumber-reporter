@@ -52,12 +52,29 @@ fn parse_error_feature_to_dict(spec_file: &Path, results: &cucumber_json::Featur
         })).into_value(),
     );
     feature.insert("error_message".into(), error_message.into_value());
+    feature.insert("has_rule_scenarios".into(), false.into_value());
+    feature.insert(
+        "summary_rows".into(),
+        error_summary_rows(&error_details).into_value(),
+    );
 
     Some(feature.into_value())
 }
 
 use crate::info_types::{FeatureInfo, ReportInfo};
 use crate::typst_world::{ReportGenerator, TypstTemplates};
+
+fn error_summary_rows(error_details: &[(String, String)]) -> Array {
+    Array::from_iter(error_details.iter().map(|(scenario, message)| {
+        dict! {
+            "rule" => Value::None,
+            "scenario" => scenario.clone(),
+            "outcome" => "failed",
+            "errors" => message.clone(),
+        }
+        .into_value()
+    }))
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]
 pub enum ReportFormat {
@@ -76,6 +93,39 @@ pub(crate) trait GherkinToDict {
     fn to_dict(&self) -> Dict;
 }
 
+fn read_report_template(
+    field_name: &str,
+    path: Option<&str>,
+) -> anyhow::Result<Option<(String, &'static str)>> {
+    let Some(path) = path else {
+        return Ok(None);
+    };
+
+    let path = Path::new(path);
+    if !path.is_file() {
+        return Err(anyhow!(
+            "{field_name} must be a path to an existing Markdown (.md) or Typst (.typ) file: {}",
+            path.display()
+        ));
+    }
+
+    let format = path
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .map(str::to_ascii_lowercase);
+    let format = match format.as_deref() {
+        Some("md") => "markdown",
+        Some("typ") => "typst",
+        _ => {
+            return Err(anyhow!(
+                "{field_name} must be a Markdown (.md) or Typst (.typ) file: {}",
+                path.display()
+            ));
+        }
+    };
+
+    Ok(Some((std::fs::read_to_string(path)?, format)))
+}
 
 fn feature_to_dict(spec_file: &Path, results: Option<cucumber_json::Feature>) -> Option<Value> {
     match gherkin::Feature::parse_path(spec_file, gherkin::GherkinEnv::default()) {
@@ -104,7 +154,13 @@ fn feature_to_dict(spec_file: &Path, results: Option<cucumber_json::Feature>) ->
                         "errors".into(),
                         Value::Array(Array::from_iter([error_entry.into_value()])),
                     );
-                    feature.insert("error_message".into(), message.into_value());
+                    feature.insert("error_message".into(), message.clone().into_value());
+                    feature.insert("has_rule_scenarios".into(), false.into_value());
+                    feature.insert(
+                        "summary_rows".into(),
+                        error_summary_rows(&[("Feature parse error".to_string(), message)])
+                            .into_value(),
+                    );
                     Some(feature.into_value())
                 })
         }
@@ -185,6 +241,19 @@ impl ReportGenerator {
                 "feature_introduction_format".into(),
                 format.into_value(),
             );
+        }
+        for (field_name, path) in [
+            ("title_page", run_info.title_page.as_deref()),
+            ("header", run_info.header.as_deref()),
+            ("footer", run_info.footer.as_deref()),
+        ] {
+            if let Some((content, format)) = read_report_template(field_name, path)? {
+                run_info_dict.insert(field_name.into(), content.into_value());
+                run_info_dict.insert(
+                    format!("{field_name}_format").into(),
+                    format.into_value(),
+                );
+            }
         }
         inputs.insert("runinfo".into(), run_info_dict.into_value());
 
