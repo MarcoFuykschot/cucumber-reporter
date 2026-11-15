@@ -2,6 +2,8 @@
 #import "scenario.typ": *
 #import "styles.typ": *
 
+#show table.cell: set text(hyphenate: true)
+
 #let render_outline(scenario, level: 3) = {
 
    show regex("<[^>]+>"): placeholder => {
@@ -10,14 +12,14 @@
     text(style: "italic", fill: gray)[#placeholder]
   }
 
-  render_scenario(scenario, level: level)
+  render_scenario(scenario, level: level, show_step_outcome: false)
 
   if scenario.examples.len() > 0 [
-    #render_section_label("Examples")
+    #render_section_label("Variations")
     #for example in scenario.examples [
       #if example.name != none [
         #text(weight: "bold", fill: gray.darken(30%))[#example.name]
-        #v(6pt)
+        #v(4pt)
       ]
 
       #if example.tags.len() > 0 [
@@ -25,27 +27,21 @@
       ]
 
       #let rows = example.rows
-      #let headers = rows.at(0, default: ())
       #context {
-        let header_rotation = table_header_rotation(headers, example.columns)
         table(
           columns: table_columns(example.columns),
           stroke: table_stroke,
-          inset: 8pt,
+          inset: 4pt,
           ..rows.enumerate().map(((index, row)) => row.map(cell => {
             if index == 0 {
-              render_table_header(
-                outcome(cell),
-                rotation: if cell.contains(" ") { none } else { header_rotation },
-                wrap: true,
-              )
+              render_table_header(outcome(cell))
             } else {
               outcome(cell)
             }
           })).flatten()
         )
       }
-      #v(10pt)
+      #v(6pt)
     ]
   ]
 }

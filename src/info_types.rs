@@ -31,28 +31,27 @@ impl FeatureInfo {
     }
 
     fn get_scenario_info(&self, info: &gherkin::Scenario) -> Value {
-        let scenario_info = ScenarioInfo {
-            scenario: info.clone(),
+        self.scenario_info(info).to_dict().into_value()
+    }
+
+    fn scenario_info(&self, scenario: &gherkin::Scenario) -> ScenarioInfo {
+        let matcher = ScenarioInfo {
+            scenario: scenario.clone(),
             results: None,
         };
-
-        let results = if let Some(results) = &self.results {
+        let results = self.results.as_ref().map(|results| {
             results
                 .elements
                 .iter()
-                .filter(|result| scenario_info.result_matches(result))
+                .filter(|result| matcher.result_matches(result))
                 .cloned()
-                .collect::<Vec<_>>()
-                .into()
-        } else {
-            None
-        };
+                .collect()
+        });
 
-        let scenario_info = ScenarioInfo {
-            scenario: info.clone(),
+        ScenarioInfo {
+            scenario: scenario.clone(),
             results,
-        };
-        scenario_info.to_dict().into_value()
+        }
     }
 }
 
@@ -69,6 +68,27 @@ fn combine_outcomes(
         }
         _ => cucumber_json::Status::Passed,
     }
+}
+
+fn replace_table_cell_characters(cell: &str, characters: &[char]) -> String {
+    characters.iter().fold(cell.to_string(), |cell, character| {
+        cell.replace(*character, " ")
+    })
+}
+
+fn scenario_summary_row(
+    rule_number: Option<usize>,
+    scenario: &str,
+    outcome: Option<cucumber_json::Status>,
+    errors: String,
+) -> Value {
+    dict! {
+        "rule" => rule_number.map_or_else(|| Value::None, |number| number.to_string().into_value()),
+        "scenario" => scenario.to_string(),
+        "outcome" => outcome.map_or_else(|| Value::None, |status| status.to_string().into_value()),
+        "errors" => errors,
+    }
+    .into_value()
 }
 
 impl GherkinToDict for FeatureInfo {
@@ -104,6 +124,64 @@ impl GherkinToDict for FeatureInfo {
             })
             .unwrap_or_default();
         let error_message = error_details.first().map(|(_, message)| message.clone());
+        let has_rule_scenarios = self
+            .feature
+            .rules
+            .iter()
+            .any(|rule| !rule.scenarios.is_empty());
+        let scenario_infos = self
+            .feature
+            .scenarios
+            .iter()
+            .map(|scenario| (None, self.scenario_info(scenario)))
+            .chain(self.feature.rules.iter().enumerate().flat_map(|(index, rule)| {
+                rule.scenarios
+                    .iter()
+                    .map(move |scenario| (Some(index + 1), self.scenario_info(scenario)))
+            }))
+            .collect::<Vec<_>>();
+        let mut summary_rows = scenario_infos
+            .iter()
+            .map(|(rule_number, info)| {
+                let errors = info
+                    .results
+                    .iter()
+                    .flatten()
+                    .flat_map(|result| &result.steps)
+                    .filter_map(|step| step.result.error_message.as_deref())
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                scenario_summary_row(
+                    *rule_number,
+                    &info.scenario.name,
+                    info.outcome(),
+                    errors,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        if let Some(results) = &self.results {
+            for element in &results.elements {
+                if scenario_infos.iter().any(|(_, info)| info.result_matches(element)) {
+                    continue;
+                }
+                let scenario_name = if element.name.trim().is_empty() {
+                    "Feature parse error"
+                } else {
+                    &element.name
+                };
+                for step in &element.steps {
+                    if let Some(message) = &step.result.error_message {
+                        summary_rows.push(scenario_summary_row(
+                            None,
+                            scenario_name,
+                            Some(cucumber_json::Status::Failed),
+                            message.clone(),
+                        ));
+                    }
+                }
+            }
+        }
 
         dict! {
             "name" => self.feature.name.clone(),
@@ -122,6 +200,8 @@ impl GherkinToDict for FeatureInfo {
                 .into_value()
             })),
             "error_message" => error_message.map_or_else(|| Value::None, |message| message.into_value()),
+            "has_rule_scenarios" => has_rule_scenarios,
+            "summary_rows" => Array::from_iter(summary_rows),
         }
     }
 }
@@ -344,7 +424,10 @@ impl GherkinToDict for ExampleInfo {
                 "name" => self.example.name.clone(),
                 "columns" => colums + if self.result.is_some() { 2 } else { 0 },
                 "rows" => Array::from_iter(rows.iter().map(|row| {
-                    Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
+                    Array::from_iter(row.iter().map(|cell| {
+                        replace_table_cell_characters(cell, &['_']).into_value()
+                    }))
+                    .into_value()
                 })),
                 "tags" => self.example.tags.clone()
             }
@@ -422,8 +505,24 @@ impl GherkinToDict for Table {
         dict! {
             "columns" => self.row_width(),
             "rows" => Array::from_iter(self.rows.iter().map(|row| {
-                Array::from_iter(row.iter().map(|cell| cell.clone().into_value())).into_value()
+                Array::from_iter(row.iter().map(|cell| {
+                    replace_table_cell_characters(cell, &['_']).into_value()
+                }))
+                .into_value()
             })),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::replace_table_cell_characters;
+
+    #[test]
+    fn replaces_configured_characters_in_table_cells() {
+        assert_eq!(
+            replace_table_cell_characters("long_cell-with_symbols", &['_', '-']),
+            "long cell with symbols"
+        );
     }
 }

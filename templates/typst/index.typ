@@ -3,14 +3,16 @@
 
 #set page(
   paper: "a4",
-  margin: (top: 2cm, bottom: 2cm, left: 1.5cm, right: 1.5cm),
+  margin: (top: 1.5cm, bottom: 1.5cm, left: 1.2cm, right: 1.2cm),
 )
 
 #set text(font: "New Computer Modern", size: 11pt)
 #set heading(numbering: "1.")
 
 #import "feature.typ": *
-#import "styles.typ": render_markdown
+#import "styles.typ": render_markdown, render_table_header
+
+#show table.cell: set text(hyphenate: true)
 
 #let runinfo = inputs.at("runinfo", default: {})
 
@@ -60,10 +62,10 @@
   })
   #table(
     columns: (1fr, auto),
-    inset: 7pt,
+    inset: 4pt,
     align: left,
     stroke: table_stroke,
-    [Feature], [Outcome],
+    render_table_header([Feature]), render_table_header([Result]),
     ..summary_rows.flatten(),
   )
   #pagebreak()

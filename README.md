@@ -60,6 +60,10 @@ cargo run --bin report-generator -- \
 
 If no JSON result files are supplied, the generator still renders a report from the feature definitions alone.
 
+The scenario summary matches execution outcomes and errors by source line, so
+rule-prefixed JSON scenario names are supported. Errors appear in the matching
+scenario row; only errors without a matching scenario get separate rows.
+
 ## Two ways to generate a report
 
 This project supports two complementary ways to produce output:

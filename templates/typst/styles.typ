@@ -1,51 +1,11 @@
 #import "@preview/cmarker:0.1.10"
 #import "@preview/in-dexter:0.7.2": *
-#import sys: inputs
 
 #let table_stroke = (paint: luma(200), thickness: 0.4pt)
 
 #let render_markdown(markdown) = cmarker.render(markdown)
 
-#let table_header_rotation(headers, columns) = {
-  if inputs.at("is_html", default: false) or columns <= 0 {
-    none
-  } else {
-    let max_column_width = 18cm / columns - 20pt
-    let rotatable_headers = headers.filter(header => not header.contains(" "))
-    let needs_rotation = rotatable_headers.any(
-      header => measure(text(weight: "bold")[#header]).width > max_column_width,
-    )
-    if not needs_rotation {
-      none
-    } else {
-      let fitting_angles = range(65, 91).filter(angle =>
-        rotatable_headers.all(header =>
-          {
-            let size = measure(text(weight: "bold")[#header])
-            let rotated_width = size.width * calc.cos(angle * 1deg) + size.height * calc.sin(angle * 1deg)
-            rotated_width <= max_column_width
-          },
-        ),
-      )
-      if fitting_angles.len() > 0 {
-        fitting_angles.first() * 1deg
-      } else {
-        90deg
-      }
-    }
-  }
-}
-
-#let render_table_header(cell, rotation: none, wrap: false) = {
-  let header = text(weight: "bold")[#cell]
-  if rotation != none {
-    align(bottom + center)[#rotate(-rotation, reflow: true)[#header]]
-  } else if wrap {
-    text(weight: "bold", hyphenate: true)[#cell]
-  } else {
-    header
-  }
-}
+#let render_table_header(cell) = text(weight: "bold", hyphenate: true)[#cell]
 
 #let table_columns(count) = range(count).map(_ => 1fr)
 
@@ -61,22 +21,19 @@
     tags
       .map(tag => box(
         fill: gray,
-        inset: (x: 5pt, y: 3pt),
+        inset: (x: 4pt, y: 2pt),
       )[
         #tag #index[#tag]
       ])
-      .join(h(5pt))
+      .join(h(3pt))
     parbreak()
   }
 }
 
-#let render_description(description, title: none) = {
+#let render_description(description) = {
   if description != none {
-    block(inset: (left: 10pt), [
-      #if title != none [
-        #text(fill: gray.darken(40%), weight: "bold", size: 0.7em)[#title]
-        #v(4pt)
-      ]
+    v(0.3em)
+    block(inset: (left: 6pt), [
       #context {
         set heading(bookmarked: false, outlined: false, numbering: none)
         show heading: set text(weight: "bold", size: 8pt)
@@ -85,10 +42,11 @@
         cmarker.render(description)
       }
     ])
+    v(0.3em)
   }
 }
 
 #let render_section_label(title) = {
-  text(fill: gray.darken(30%), weight: "bold", size: 0.8em)[#title]
-  v(4pt)
+  text(fill: gray.darken(30%), weight: "bold", size: 0.8em)[#title:]
+  v(2pt)
 }

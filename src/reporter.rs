@@ -167,21 +167,28 @@ impl CucumberReporter {
                 rules.push(rules_html.to_string());
             }
 
+            let has_rule_scenarios = feature.rules.iter().any(|rule| !rule.scenarios.is_empty());
             let mut scenario_summary_rows = Vec::new();
             for scenario in &feature.scenarios {
                 let outcome = self.scenario_outcome(scenario);
-                scenario_summary_rows.push(format!(
-                    "<tr><td>{}</td><td>{}</td></tr>",
-                    scenario.name,
-                    outcome
-                ));
+                if has_rule_scenarios {
+                    scenario_summary_rows.push(format!(
+                        "<tr><td colspan=\"2\">{}</td><td>{}</td></tr>",
+                        scenario.name, outcome
+                    ));
+                } else {
+                    scenario_summary_rows.push(format!(
+                        "<tr><td>{}</td><td>{}</td></tr>",
+                        scenario.name, outcome
+                    ));
+                }
             }
-            for rule in &feature.rules {
+            for (rule_index, rule) in feature.rules.iter().enumerate() {
                 for scenario in &rule.scenarios {
                     let outcome = self.scenario_outcome(scenario);
                     scenario_summary_rows.push(format!(
-                        "<tr><td>{} - {}</td><td>{}</td></tr>",
-                        rule.name,
+                        "<tr><td>{}</td><td>{}</td><td>{}</td></tr>",
+                        rule_index + 1,
                         scenario.name,
                         outcome
                     ));
@@ -189,16 +196,26 @@ impl CucumberReporter {
             }
 
             let mut rule_rows = Vec::new();
-            for rule in &feature.rules {
+            for (rule_index, rule) in feature.rules.iter().enumerate() {
                 let outcome = self.rule_outcome(rule);
-                rule_rows.push(format!("<tr><td>{}</td><td>{}</td></tr>", rule.name, outcome));
+                rule_rows.push(format!(
+                    "<tr><td>{}</td><td>{}</td><td>{}</td></tr>",
+                    rule_index + 1,
+                    rule.name,
+                    outcome
+                ));
             }
 
             let scenario_summary = if scenario_summary_rows.is_empty() {
                 String::new()
             } else {
+                let summary_header = if has_rule_scenarios {
+                    "<tr><th>Rule</th><th>Scenario</th><th>Outcome</th></tr>"
+                } else {
+                    "<tr><th>Scenario</th><th>Outcome</th></tr>"
+                };
                 format!(
-                    "<table><thead><tr><th>Scenario</th><th>Outcome</th></tr></thead><tbody>{}</tbody></table>",
+                    "<table><thead>{summary_header}</thead><tbody>{}</tbody></table>",
                     scenario_summary_rows.join("")
                 )
             };
@@ -206,7 +223,7 @@ impl CucumberReporter {
                 String::new()
             } else {
                 format!(
-                    "<table><thead><tr><th>Rule</th><th>Outcome</th></tr></thead><tbody>{}</tbody></table>",
+                    "<table><thead><tr><th>Number</th><th>Rule</th><th>Outcome</th></tr></thead><tbody>{}</tbody></table>",
                     rule_rows.join("")
                 )
             };
