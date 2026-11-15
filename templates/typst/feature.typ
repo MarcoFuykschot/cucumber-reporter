@@ -89,25 +89,24 @@
         === Requirements
         #for rule in feature.rules [
           === #rule.name
-          #render_tags(rule.tags)
-          #render_description(rule.description)
+          #if rule.description != none [
+            #render_description(rule.description)
+          ]
+          #if rule.tags.len() > 0 [
+            #render_tags(rule.tags)
+          ]
           #for scenario in rule.scenarios [
             #render_element(scenario, level: 4)
           ]
         ]
       ]
 
-      #if not feature.background == none [
+      #if feature.background != none and (
+        (feature.background.description != none and feature.background.description.len() > 0)
+        or feature.background.steps.len() > 0
+      ) [
         === Background
-        #let background = feature.background
-        #background.description
-        #if background.steps.len() > 0 [
-          #for step in background.steps [
-            #render_step(step)
-          ]
-        ] else [
-          #emph[No steps defined for the background.]
-        ]
+        #render_background(feature.background)
       ]
 
       #if feature.scenarios.len() > 0 [

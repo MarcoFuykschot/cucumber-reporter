@@ -52,8 +52,9 @@ fn includes_feature_summary_and_rules_list_in_html() {
     assert!(html.contains("rule 1 - Scenario 1"));
     assert!(html.contains("<td>rule 1</td><td></td>"));
     assert!(html.contains("<td>rule 1 - Scenario 1</td><td></td>"));
-    assert!(html.contains("<div>Description test scenario</div><p><span"));
-    assert!(html.contains("<div>Description of a rule</div><h5"));
+    assert!(html.contains("Scenario description"));
+    assert!(html.contains("Description test scenario"));
+    assert!(html.contains("Description of a rule"));
 
     std::fs::remove_file(output_path).unwrap();
 }
@@ -531,4 +532,151 @@ fn rotates_overlapping_table_headers_in_steps_and_examples() {
     std::fs::remove_file(spec_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
     std::fs::remove_file(html_output_path).unwrap();
+}
+
+#[test]
+fn renders_background_and_rule_sections() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-background-{}.pdf",
+        std::process::id()
+    ));
+    let spec_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-background-{}.feature",
+        std::process::id()
+    ));
+    std::fs::write(
+        &spec_path,
+        "Feature: Background styling\n\
+         Background:\n\
+         Given a shared state\n\
+         Scenario: Background styling\n\
+         When an action is performed\n\
+         Then a result is shown\n\
+         @RuleTag\n\
+         Rule: Rule styling\n\
+         A rule description\n\
+         Scenario: Rule scenario\n\
+         Given a rule-specific state\n",
+    )
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Pdf,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let pdf = std::fs::read(&output_path).unwrap();
+    assert!(pdf.starts_with(b"%PDF-"));
+
+    std::fs::remove_file(spec_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn renders_step_error_on_next_line_in_step_cell() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-step-error-{}.html",
+        std::process::id()
+    ));
+    let spec_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-step-error-{}.feature",
+        std::process::id()
+    ));
+    let results_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-step-error-{}.json",
+        std::process::id()
+    ));
+    std::fs::write(
+        &spec_path,
+        "Feature: Step errors\n\
+         Scenario: Failing step\n\
+         Given a value\n",
+    )
+    .unwrap();
+
+    let results = serde_json::json!([{
+        "uri": spec_path.file_name().unwrap().to_string_lossy(),
+        "keyword": "Feature",
+        "name": "Step errors",
+        "tags": [],
+        "elements": [{
+            "keyword": "Scenario",
+            "type": "scenario",
+            "line": 2,
+            "name": "Failing step",
+            "tags": [],
+            "steps": [{
+                "keyword": "Given ",
+                "line": 3,
+                "name": "a value",
+                "result": {
+                    "status": "failed",
+                    "duration": 0,
+                    "error_message": "step error marker"
+                }
+            }]
+        }]
+    }]);
+    std::fs::write(&results_path, results.to_string()).unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &Some(vec![results_path.clone()]),
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    let step_position = html.find("a value").unwrap();
+    let error_position = step_position + html[step_position..]
+        .find("Error: step error marker")
+        .unwrap();
+    let between = &html[step_position..error_position];
+    assert!(between.contains("<br"));
+    assert!(!between.contains("</td>"));
+
+    std::fs::remove_file(spec_path).unwrap();
+    std::fs::remove_file(results_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn omits_empty_background_section() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-empty-background-{}.html",
+        std::process::id()
+    ));
+    let spec_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-empty-background-{}.feature",
+        std::process::id()
+    ));
+    std::fs::write(
+        &spec_path,
+        "Feature: Empty background\n\
+         Background:\n\
+         Scenario: Has its own step\n\
+         Given a value\n",
+    )
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(!html.contains("Background"));
+
+    std::fs::remove_file(spec_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
 }

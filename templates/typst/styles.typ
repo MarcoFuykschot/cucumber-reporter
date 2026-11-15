@@ -70,9 +70,13 @@
   }
 }
 
-#let render_description(description) = {
+#let render_description(description, title: none) = {
   if description != none {
     block(inset: (left: 10pt), [
+      #if title != none [
+        #text(fill: gray.darken(40%), weight: "bold", size: 0.7em)[#title]
+        #v(4pt)
+      ]
       #context {
         set heading(bookmarked: false, outlined: false, numbering: none)
         show heading: set text(weight: "bold", size: 8pt)
@@ -82,4 +86,9 @@
       }
     ])
   }
+}
+
+#let render_section_label(title) = {
+  text(fill: gray.darken(30%), weight: "bold", size: 0.8em)[#title]
+  v(4pt)
 }

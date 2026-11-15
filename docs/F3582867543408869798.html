@@ -2,72 +2,165 @@
 
 <head>
     <style>
-        .title { 
-            color: #004080;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #1f2937;
+            line-height: 1.5;
+            margin: 24px;
+            background: #f8fafc;
+        }
+
+        .title {
+            color: #0f172a;
+            border-bottom: 1px solid #dbe3ee;
+            padding-bottom: 8px;
+            margin: 0 0 14px;
+            font-size: 1.5rem;
+        }
+
+        .scenario-block {
+            margin-bottom: 28px;
+        }
+
+        .scenario-description,
+        .example-card {
+            margin: 12px 0 18px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .section-label {
+            display: inline-block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .scenario-description p,
+        .example-description {
+            margin: 0;
+            color: #334155;
+        }
+
+        .example-title {
+            margin: 0 0 8px;
+            color: #0f172a;
+            font-size: 1.1rem;
         }
 
         .desc {
             margin: 10px 0;
             line-height: 1.5;
         }
+
         .results {
             border-collapse: collapse;
             width: 100%;
-            margin: 2px 0;
+            margin: 10px 0 0;
+            background: #fff;
+            border: 1px solid #dfe7f1;
         }
+
         .row {
-            border: 1px solid #ddd;
-            padding: 2px;
+            border: 1px solid #dfe7f1;
+            padding: 0;
             text-align: left;
-        }
-       .datatable {
-            border-collapse:collapse;
-            margin: 10px 0;
-        }
-        .datarow {
-            border: 1px solid burlywood;
-            text-align: center;
-        }
-        .datacell {
-            border: 1px solid burlywood;
-            padding: 5px;
+            background: transparent;
         }
 
         .heading {
-            background-color: #f2f2f2;
+            background-color: #f3f6fa;
+            color: #334155;
+        }
+
+        .heading th {
+            padding: 10px 12px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .steps-table th,
+        .steps-table td,
+        .example-table th,
+        .example-table td {
+            padding: 10px 12px;
+            vertical-align: top;
+        }
+
+        .step-cell {
+            white-space: normal;
+        }
+
+        .step-indent {
+            display: inline-block;
+            margin-left: 18px;
+        }
+
+        .status-cell {
+            width: 110px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .datatable {
+            border-collapse: collapse;
+            margin: 10px 0 0 18px;
+            border: 1px solid #d6d3d1;
+            background: #f8fafc;
+        }
+
+        .datarow {
+            border: 1px solid #d6d3d1;
+            text-align: center;
+        }
+
+        .datacell {
+            border: 1px solid #d6d3d1;
+            padding: 6px 8px;
         }
 
         .example-header {
             overflow-wrap: anywhere;
+            white-space: nowrap;
+        }
+
+        .example-cell,
+        .example-outcome-cell {
+            text-align: left;
+            vertical-align: top;
         }
 
         .Failed {
-            color: firebrick
+            color: #b91c1c;
         }
 
         .Passed {
-            color: darkgreen
+            color: #166534;
         }
 
         .NotRun {
-            color: dimgray;
+            color: #64748b;
             font-style: italic;
         }
 
         .bg_Failed {
-            background: rgb(255, 255, 255);
-            background: radial-gradient(circle, rgba(255, 255, 255, 1) 75%, rgba(255, 0, 0, 1) 100%);
-            font-weight: bolder;
+            background: linear-gradient(90deg, rgba(254, 226, 226, 0.8), rgba(255, 255, 255, 1));
+            font-weight: 600;
         }
 
         .bg_Passed {
-            color: darkgreen
+            background: linear-gradient(90deg, rgba(220, 252, 231, 0.9), rgba(255, 255, 255, 1));
+            color: #166534;
         }
 
         .bg_NotRun {
-            color: dimgray;
+            color: #64748b;
             font-style: italic;
         }
     </style>
@@ -85,177 +178,179 @@
 
 
     
+    <section class="scenario-block">
     <h3 class="title">Scenario Outline name with tags &lt;test&gt;</h3>
-<p class="desc"></p>
-<table class="results">
-    <thead>
-        <tr class="row heading">
-            <th>Step</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr class="row">
-            <td>
-                Given a fact with &#x27;&lt;Header1&gt;&#x27;
-            </td>
-        </tr>
-        <tr class="row">
-            <td>
-                Given a fact with &#x27;&lt;Header2&gt;&#x27;
-            </td>
-        </tr>
-    </tbody>
-</table>
 
-<h4>Example </h4>
-<p></p>
-<table class="results">
-    <thead>
-        <th class="row heading example-header">
-            Header1
-        </th>
-        <th class="row heading example-header">
-            Header2
-        </th>
-        <th class="row heading example-header">
-            test
-        </th>
-        <th class="row heading example-header">
-            Outcome
-        </th>
-    </thead>
-    <tbody>
-        <tr class="row bg_Passed">
-            <td style="text-align: center">Value 1</td>
-            <td style="text-align: center">Value 1</td>
-            <td style="text-align: center">aaaaaaaa1 asdf</td>
-            <td>
-                <table class="results">
-                    <thead>
-                        <tr class="row heading">
-                            <th>Step</th>
-                            <th>Outcome</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="row Passed" >
-                            <td>
-                                Given a fact with &#x27;Value 1&#x27;
-                            </td>
-                            <td>
-                                Passed
-                            </td>
-                        </tr>
-                        <tr class="row Passed" >
-                            <td>
-                                Given a fact with &#x27;Value 1&#x27;
-                            </td>
-                            <td>
-                                Passed
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>            </td>
-        </tr>
-        <tr class="row bg_Failed">
-            <td style="text-align: center">Value 2</td>
-            <td style="text-align: center">Value 2</td>
-            <td style="text-align: center">aaa     aaaaa2</td>
-            <td>
-                <table class="results">
-                    <thead>
-                        <tr class="row heading">
-                            <th>Step</th>
-                            <th>Outcome</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="row Failed" >
-                            <td>
-                                Given a fact with &#x27;Value 2&#x27;
-                            </td>
-                            <td>
-                                Failed
-                            </td>
-                        </tr>
-                        <tr class="row NotRun" >
-                            <td>
-                                Given a fact with &#x27;Value 2&#x27;
-                            </td>
-                            <td>
-                                NotRun
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>            </td>
-        </tr>
-        <tr class="row bg_Passed">
-            <td style="text-align: center">Value 3</td>
-            <td style="text-align: center">Value 3</td>
-            <td style="text-align: center">aaaaaaaa3</td>
-            <td>
-                <table class="results">
-                    <thead>
-                        <tr class="row heading">
-                            <th>Step</th>
-                            <th>Outcome</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="row Passed" >
-                            <td>
-                                Given a fact with &#x27;Value 3&#x27;
-                            </td>
-                            <td>
-                                Passed
-                            </td>
-                        </tr>
-                        <tr class="row Passed" >
-                            <td>
-                                Given a fact with &#x27;Value 3&#x27;
-                            </td>
-                            <td>
-                                Passed
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>            </td>
-        </tr>
-        <tr class="row bg_Passed">
-            <td style="text-align: center">Value 4</td>
-            <td style="text-align: center">Value 4</td>
-            <td style="text-align: center"></td>
-            <td>
-                <table class="results">
-                    <thead>
-                        <tr class="row heading">
-                            <th>Step</th>
-                            <th>Outcome</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="row Passed" >
-                            <td>
-                                Given a fact with &#x27;Value 4&#x27;
-                            </td>
-                            <td>
-                                Passed
-                            </td>
-                        </tr>
-                        <tr class="row Passed" >
-                            <td>
-                                Given a fact with &#x27;Value 4&#x27;
-                            </td>
-                            <td>
-                                Passed
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>            </td>
-        </tr>
-    </tbody>
-</table>
+    <table class="results steps-table">
+        <thead>
+            <tr class="row heading">
+                <th scope="col">Step</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row">
+                <td class="step-cell">
+                    Given a fact with &#x27;&lt;Header1&gt;&#x27;
+                </td>
+            </tr>
+            <tr class="row">
+                <td class="step-cell">
+                    Given a fact with &#x27;&lt;Header2&gt;&#x27;
+                </td>
+            </tr>
+        </tbody>
+    </table>
 
+    <section class="example-card">
+        <h4 class="example-title">Example</h4>
+        <table class="results example-table">
+            <thead>
+                <th class="row heading example-header">
+                    Header1
+                </th>
+                <th class="row heading example-header">
+                    Header2
+                </th>
+                <th class="row heading example-header">
+                    test
+                </th>
+                <th class="row heading example-header">
+                    Outcome
+                </th>
+            </thead>
+            <tbody>
+                <tr class="row bg_Passed">
+                    <td class="example-cell">Value 1</td>
+                    <td class="example-cell">Value 1</td>
+                    <td class="example-cell">aaaaaaaa1 asdf</td>
+                    <td class="example-outcome-cell">
+                        <table class="results">
+                            <thead>
+                                <tr class="row heading">
+                                    <th>Step</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="row Passed" >
+                                    <td>
+                                        Given a fact with &#x27;Value 1&#x27;
+                                    </td>
+                                    <td>
+                                        Passed
+                                    </td>
+                                </tr>
+                                <tr class="row Passed" >
+                                    <td>
+                                        Given a fact with &#x27;Value 1&#x27;
+                                    </td>
+                                    <td>
+                                        Passed
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>                    </td>
+                </tr>
+                <tr class="row bg_Failed">
+                    <td class="example-cell">Value 2</td>
+                    <td class="example-cell">Value 2</td>
+                    <td class="example-cell">aaa     aaaaa2</td>
+                    <td class="example-outcome-cell">
+                        <table class="results">
+                            <thead>
+                                <tr class="row heading">
+                                    <th>Step</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="row Failed" >
+                                    <td>
+                                        Given a fact with &#x27;Value 2&#x27;
+                                    </td>
+                                    <td>
+                                        Failed
+                                    </td>
+                                </tr>
+                                <tr class="row NotRun" >
+                                    <td>
+                                        Given a fact with &#x27;Value 2&#x27;
+                                    </td>
+                                    <td>
+                                        NotRun
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>                    </td>
+                </tr>
+                <tr class="row bg_Passed">
+                    <td class="example-cell">Value 3</td>
+                    <td class="example-cell">Value 3</td>
+                    <td class="example-cell">aaaaaaaa3</td>
+                    <td class="example-outcome-cell">
+                        <table class="results">
+                            <thead>
+                                <tr class="row heading">
+                                    <th>Step</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="row Passed" >
+                                    <td>
+                                        Given a fact with &#x27;Value 3&#x27;
+                                    </td>
+                                    <td>
+                                        Passed
+                                    </td>
+                                </tr>
+                                <tr class="row Passed" >
+                                    <td>
+                                        Given a fact with &#x27;Value 3&#x27;
+                                    </td>
+                                    <td>
+                                        Passed
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>                    </td>
+                </tr>
+                <tr class="row bg_Passed">
+                    <td class="example-cell">Value 4</td>
+                    <td class="example-cell">Value 4</td>
+                    <td class="example-cell"></td>
+                    <td class="example-outcome-cell">
+                        <table class="results">
+                            <thead>
+                                <tr class="row heading">
+                                    <th>Step</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="row Passed" >
+                                    <td>
+                                        Given a fact with &#x27;Value 4&#x27;
+                                    </td>
+                                    <td>
+                                        Passed
+                                    </td>
+                                </tr>
+                                <tr class="row Passed" >
+                                    <td>
+                                        Given a fact with &#x27;Value 4&#x27;
+                                    </td>
+                                    <td>
+                                        Passed
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</section>
 </div>
 </body>
 
