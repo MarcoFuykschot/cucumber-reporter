@@ -3,7 +3,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "CucumberJson": {
-      "additionalProperties": false,
       "properties": {
         "features": {
           "items": {
@@ -22,7 +21,6 @@
       "type": "object"
     },
     "Argument": {
-      "additionalProperties": false,
       "properties": {
         "offset": {
           "type": "number"
@@ -38,7 +36,6 @@
       "type": "object"
     },
     "DataTableRow": {
-      "additionalProperties": false,
       "properties": {
         "cells": {
           "items": {
@@ -53,7 +50,6 @@
       "type": "object"
     },
     "DocString": {
-      "additionalProperties": false,
       "properties": {
         "content_type": {
           "type": "string"
@@ -72,7 +68,6 @@
       "type": "object"
     },
     "Element": {
-      "additionalProperties": false,
       "properties": {
         "after": {
           "items": {
@@ -137,7 +132,6 @@
       "type": "string"
     },
     "Feature": {
-      "additionalProperties": false,
       "properties": {
         "description": {
           "type": "string"
@@ -179,7 +173,6 @@
       "type": "object"
     },
     "Hook": {
-      "additionalProperties": false,
       "properties": {
         "match": {
           "$ref": "#/definitions/Match"
@@ -194,7 +187,6 @@
       "type": "object"
     },
     "Match": {
-      "additionalProperties": false,
       "properties": {
         "arguments": {
           "items": {
@@ -209,7 +201,6 @@
       "type": "object"
     },
     "Result": {
-      "additionalProperties": false,
       "properties": {
         "duration": {
           "type": "number"
@@ -238,7 +229,6 @@
       "type": "string"
     },
     "Step": {
-      "additionalProperties": false,
       "properties": {
         "doc_string": {
           "$ref": "#/definitions/DocString"
@@ -274,7 +264,6 @@
       "type": "object"
     },
     "Tag": {
-      "additionalProperties": false,
       "properties": {
         "line": {
           "type": "number"

@@ -246,14 +246,17 @@ fn groups_outline_errors_and_preserves_unmatched_errors_in_summary() {
             "line": line,
             "name": name,
             "tags": [],
+            "future_element_field": true,
             "steps": [{
                 "keyword": "Given",
                 "line": line,
                 "name": "a fact",
+                "future_step_field": "ignored",
                 "result": {
                     "status": "failed",
                     "duration": 0,
-                    "error_message": message
+                    "error_message": message,
+                    "future_result_field": null
                 }
             }]
         })
@@ -262,6 +265,7 @@ fn groups_outline_errors_and_preserves_unmatched_errors_in_summary() {
         "uri": spec_path.file_name().unwrap().to_str().unwrap(),
         "keyword": "Feature",
         "name": "Outline summary",
+        "future_feature_field": {"ignored": true},
         "tags": [],
         "elements": elements
     }]);
