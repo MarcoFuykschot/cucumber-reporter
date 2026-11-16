@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use gherkin::{Background, Table};
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, info};
 use typst::foundations::{Array, Dict, IntoValue, Value, dict};
 
 use crate::generator::cucumber_json::ElementType;
@@ -362,6 +362,13 @@ pub(crate) struct StepInfo {
 
 impl GherkinToDict for StepInfo {
     fn to_dict(&self) -> Dict {
+        info!(
+            keyword = %self.step.keyword,
+            step = %self.step.value,
+            outcome = ?self.result.as_ref().map(|result| result.result.status),
+            "Processing step"
+        );
+
         dict! {
             "keyword" => self.step.keyword.clone(),
             "text" => self.step.value.clone(),
