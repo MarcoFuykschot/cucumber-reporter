@@ -68,6 +68,7 @@ fn error_summary_rows(error_details: &[(String, String)]) -> Array {
     Array::from_iter(error_details.iter().map(|(scenario, message)| {
         dict! {
             "rule" => Value::None,
+            "line" => Value::None,
             "scenario" => scenario.clone(),
             "outcome" => "failed",
             "errors" => message.clone(),

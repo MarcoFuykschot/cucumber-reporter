@@ -81,7 +81,13 @@ impl FeatureInfo {
                     .filter_map(|step| step.result.error_message.as_deref())
                     .collect::<Vec<_>>()
                     .join("\n");
-                scenario_summary_row(*rule_number, &info.scenario.name, info.outcome(), errors)
+                scenario_summary_row(
+                    *rule_number,
+                    Some(info.scenario.position.line),
+                    &info.scenario.name,
+                    info.outcome(),
+                    errors,
+                )
             })
             .collect::<Vec<_>>();
 
@@ -98,6 +104,7 @@ impl FeatureInfo {
                 for step in &element.steps {
                     if let Some(message) = &step.result.error_message {
                         rows.push(scenario_summary_row(
+                            None,
                             None,
                             scenario_name,
                             Some(cucumber_json::Status::Failed),
@@ -167,12 +174,14 @@ fn replace_table_cell_characters(cell: &str, characters: &[char]) -> String {
 
 fn scenario_summary_row(
     rule_number: Option<usize>,
+    line: Option<usize>,
     scenario: &str,
     outcome: Option<cucumber_json::Status>,
     errors: String,
 ) -> Value {
     dict! {
         "rule" => rule_number.map_or_else(|| Value::None, |number| number.to_string().into_value()),
+        "line" => line.map_or_else(|| Value::None, |line| line.into_value()),
         "scenario" => scenario.to_string(),
         "outcome" => outcome.map_or_else(|| Value::None, |status| status.to_string().into_value()),
         "errors" => errors,
@@ -287,6 +296,7 @@ impl GherkinToDict for ScenarioInfo {
     fn to_dict(&self) -> Dict {
         dict! {
             "name" => self.scenario.name.clone(),
+            "line" => self.scenario.position.line,
             "keyword" => self.scenario.keyword.clone(),
             "description" => self.scenario.description.clone(),
             "outcome" => self.outcome().map_or_else(|| Value::None, |result| result.to_string().into_value()),
@@ -467,6 +477,32 @@ impl GherkinToDict for ExampleInfo {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(default)]
+#[derive(Default)]
+pub(crate) struct ReportHeadings {
+    pub(crate) features: Option<String>,
+    pub(crate) rules_summary: Option<String>,
+    pub(crate) rules_and_scenarios_summary: Option<String>,
+    pub(crate) scenario_summary: Option<String>,
+    pub(crate) requirements: Option<String>,
+    pub(crate) background: Option<String>,
+    pub(crate) tag_index: Option<String>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(default)]
+#[derive(Default)]
+pub(crate) struct ReportTableHeaders {
+    pub(crate) feature: Option<String>,
+    pub(crate) rule: Option<String>,
+    pub(crate) scenario: Option<String>,
+    pub(crate) result: Option<String>,
+    pub(crate) step: Option<String>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(default)]
 pub struct ReportInfo {
     pub(crate) title: String,
     pub(crate) author: String,
@@ -474,6 +510,8 @@ pub struct ReportInfo {
     pub(crate) time_run: Option<DateTime<Utc>>,
     // A markdown string or filename to a markdown file that will be used as an introduction to the feature chapter
     pub(crate) feature_introduction: Option<String>,
+    pub(crate) headings: ReportHeadings,
+    pub(crate) table_headers: ReportTableHeaders,
     // Markdown files used for the title page, page header, and footer
     pub(crate) title_page: Option<String>,
     pub(crate) header: Option<String>,
@@ -490,6 +528,8 @@ impl Default for ReportInfo {
             sub_title: Default::default(),
             time_run: chrono::Local::now().to_utc().into(),
             feature_introduction: None,
+            headings: ReportHeadings::default(),
+            table_headers: ReportTableHeaders::default(),
             title_page: None,
             header: None,
             footer: None,
@@ -504,6 +544,26 @@ impl GherkinToDict for ReportInfo {
             "author" => self.author.clone(),
             "sub_title" => self.sub_title.clone().map_or_else(|| Value::None, |s| s.clone().into_value()),
             "time_run" => self.time_run.map_or_else(|| Value::None, |s| ReportGenerator::typst_datetime(  s).into_value() ),
+            "headings" => dict! {
+                "features" => self.headings.features.as_deref().unwrap_or("Features"),
+                "rules_summary" => self.headings.rules_summary.as_deref().unwrap_or("Rules summary"),
+                "rules_and_scenarios_summary" => self.headings.rules_and_scenarios_summary
+                    .as_deref()
+                    .unwrap_or("Rules and scenarios summary"),
+                "scenario_summary" => self.headings.scenario_summary.as_deref().unwrap_or("Scenario summary"),
+                "requirements" => self.headings.requirements.as_deref().unwrap_or("Requirements"),
+                "background" => self.headings.background.as_deref().unwrap_or("Background"),
+                "tag_index" => self.headings.tag_index.as_deref().unwrap_or("Tag index"),
+            }
+            .into_value(),
+            "table_headers" => dict! {
+                "feature" => self.table_headers.feature.as_deref().unwrap_or("Feature"),
+                "rule" => self.table_headers.rule.as_deref().unwrap_or("Rule"),
+                "scenario" => self.table_headers.scenario.as_deref().unwrap_or("Scenario"),
+                "result" => self.table_headers.result.as_deref().unwrap_or("Result"),
+                "step" => self.table_headers.step.as_deref().unwrap_or("Step"),
+            }
+            .into_value(),
             "title_page" => self.title_page.clone(),
             "header" => self.header.clone(),
             "footer" => self.footer.clone(),
