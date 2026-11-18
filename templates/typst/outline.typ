@@ -4,9 +4,19 @@
 
 #show table.cell: set text(hyphenate: true)
 
-#let render_outline(scenario, level: 2, target: none, table_headers: (:)) = {
+#let render_outline_text(value) = {
+  let matches = value.matches(regex("<([^>]+)>"))
+  let cursor = 0
+  for placeholder in matches {
+    value.slice(cursor, placeholder.start)
+    text(style: "italic", fill: gray)[#placeholder.captures.first()]
+    cursor = placeholder.end
+  }
+  value.slice(cursor)
+}
 
-   show regex("<[^>]+>"): placeholder => {
+#let render_outline(scenario, level: 2, target: none, table_headers: (:)) = {
+  show regex("<[^>]+>"): placeholder => {
     show "<": ""
     show ">": ""
     text(style: "italic", fill: gray)[#placeholder]

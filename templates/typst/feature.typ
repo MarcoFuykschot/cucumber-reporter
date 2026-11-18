@@ -42,11 +42,13 @@
         let rule_scenarios = feature.summary_rows.filter(summary => summary.rule == rule-key)
         let scenario_rows = rule_scenarios.map(summary => {
             let result = if summary.outcome != none [#outcome(summary.outcome)] else []
-            let scenario = if summary.line != none and index != none {
-              let target = "feature-" + str(index) + "-scenario-" + str(summary.line)
-              [#link(label(target))[#summary.scenario]]
-            } else {
-              [#summary.scenario]
+            let scenario = {
+              if summary.line != none and index != none {
+                let target = "feature-" + str(index) + "-scenario-" + str(summary.line)
+                link(label(target))[#render_outline_text(summary.scenario)]
+              } else {
+                render_outline_text(summary.scenario)
+              }
             }
             ([], scenario, result)
           })
@@ -72,11 +74,13 @@
       #let feature_scenarios = feature.summary_rows.filter(summary => summary.rule == none)
       #let summary_rows = feature_scenarios.map(summary => {
         let result = if summary.outcome != none [#outcome(summary.outcome)] else []
-        let scenario = if summary.line != none and index != none {
-          let target = "feature-" + str(index) + "-scenario-" + str(summary.line)
-          [#link(label(target))[#summary.scenario]]
-        } else {
-          [#summary.scenario]
+        let scenario = {
+          if summary.line != none and index != none {
+            let target = "feature-" + str(index) + "-scenario-" + str(summary.line)
+            link(label(target))[#render_outline_text(summary.scenario)]
+          } else {
+            render_outline_text(summary.scenario)
+          }
         }
         (scenario, result)
       })
