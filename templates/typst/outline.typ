@@ -4,7 +4,7 @@
 
 #show table.cell: set text(hyphenate: true)
 
-#let render_outline(scenario, level: 3) = {
+#let render_outline(scenario, level: 2, target: none, table_headers: (:)) = {
 
    show regex("<[^>]+>"): placeholder => {
     show "<": ""
@@ -12,7 +12,13 @@
     text(style: "italic", fill: gray)[#placeholder]
   }
 
-  render_scenario(scenario, level: level, show_step_outcome: false)
+  render_scenario(
+    scenario,
+    level: level,
+    show_step_outcome: false,
+    target: target,
+    table_headers: table_headers,
+  )
 
   if scenario.examples.len() > 0 [
     #render_section_label("Variations")

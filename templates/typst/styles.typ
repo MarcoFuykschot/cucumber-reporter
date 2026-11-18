@@ -5,6 +5,16 @@
 
 #let render_markdown(markdown) = cmarker.render(markdown)
 
+#let render_overview_title(title, is-html: false) = {
+  if is-html {
+    html.elem("div", attrs: (style: "font-size: 1.5em; font-weight: bold; margin-block: 0.83em"))[#title]
+  } else {
+    block(above: 1.8em, below: 0.75em, sticky: true)[
+      #text(size: 1.4em, weight: "bold")[#title]
+    ]
+  }
+}
+
 #let render_table_header(cell) = text(weight: "bold", hyphenate: true)[#cell]
 
 #let table_columns(count) = range(count).map(_ => 1fr)

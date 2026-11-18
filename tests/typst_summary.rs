@@ -23,9 +23,11 @@ fn exports_typst_as_html() {
     let html = std::fs::read_to_string(&output_path).unwrap();
     assert!(html.starts_with("<!DOCTYPE html>"));
     assert!(html.contains("Scenario 1"));
-    assert!(html.contains("<td>Scenario</td><td>Outcome</td><td>Errors</td>"));
+    assert!(html.contains("<td>Scenario</td><td>Result</td>"));
     assert!(!html.contains("<td>Rule</td><td>Scenario</td>"));
-    assert!(html.contains("<tr><td>Scenario 1</td>"));
+    assert!(html.contains("<td><a href=\"#feature-0-scenario-5\">Scenario 1</a></td>"));
+    assert!(html.contains("<h2 id=\"feature-0\">1. simple</h2>"));
+    assert!(html.contains("<h3 id=\"feature-0-scenario-5\">1.3. Scenario 1</h3>"));
 
     std::fs::remove_file(output_path).unwrap();
 }
@@ -61,9 +63,15 @@ fn hides_rule_cell_for_standalone_scenarios_in_mixed_summary() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
-    assert!(html.contains("<td>Rule</td><td>Scenario</td><td>Outcome</td><td>Errors</td>"));
-    assert!(html.contains("<td colspan=\"2\">Standalone scenario</td>"));
-    assert!(html.contains("<td>1</td><td>Nested scenario</td>"));
+    assert!(html.contains("<td>Rule</td><td>Scenario</td><td>Result</td>"));
+    assert!(html.contains(
+        "<td><a href=\"#feature-0-scenario-2\">Standalone scenario</a></td><td></td>"
+    ));
+    assert!(html.contains("<td colspan=\"2\">A rule</td>"));
+    assert!(html.contains(
+        "<td></td><td><a href=\"#feature-0-scenario-5\">Nested scenario</a></td>"
+    ));
+    assert!(html.contains("Scenario summary"));
 
     std::fs::remove_file(spec_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
@@ -88,17 +96,17 @@ fn includes_feature_summary_and_rules_list_in_html() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
-    assert!(html.contains("Scenario summary"));
-    assert!(html.contains("<td>Outcome</td>"));
+    assert!(html.contains("Rules and scenarios summary"));
+    assert!(!html.contains("Scenario summary"));
+    assert!(html.contains("<td>Result</td>"));
     assert!(html.contains("rule 1</td>"));
-    assert!(html.contains("<td>Number</td><td>Rule</td><td>Outcome</td>"));
-    assert!(html.contains("<td>1</td><td>rule 1</td>"));
-    assert!(html.contains("<td>2</td><td>rule 2</td>"));
-    assert!(html.contains("<td>Rule</td><td>Scenario</td><td>Outcome</td>"));
-    assert!(html.contains("<td>1</td><td>Scenario 1</td>"));
-    assert!(html.contains("<td>1</td><td>rule 1</td><td></td>"));
-    assert!(html.contains("<tr><td>1</td><td>Scenario 1</td><td>"));
-    assert!(html.contains("<tr><td>2</td><td>Scenario 1</td><td>"));
+    assert!(html.contains("<td>Rule</td><td>Scenario</td><td>Result</td>"));
+    assert!(html.contains("<td colspan=\"2\">rule 1</td>"));
+    assert!(html.contains("<td colspan=\"2\">rule 2</td>"));
+    assert!(html.contains("<a href=\"#feature-0-scenario-6\">Scenario 1</a>"));
+    assert!(html.contains("<a href=\"#feature-0-scenario-34\">Scenario 1</a>"));
+    assert!(!html.contains("<td>Number</td>"));
+    assert!(!html.contains("<td>1</td><td>Scenario 1</td>"));
     assert!(html.contains("Scenario description"));
     assert!(html.contains("Description test scenario"));
     assert!(html.contains("Description of a rule"));
@@ -107,7 +115,7 @@ fn includes_feature_summary_and_rules_list_in_html() {
 }
 
 #[test]
-fn matches_rule_prefixed_results_and_errors_without_duplicate_summary_rows() {
+fn matches_rule_prefixed_results_without_error_details_in_summary() {
     let output_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-rule-outcomes-{}.html",
         std::process::id()
@@ -184,33 +192,33 @@ fn matches_rule_prefixed_results_and_errors_without_duplicate_summary_rows() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
-    assert!(html.contains("<td>1</td><td>rule 1</td><td>failed</td>"));
-    assert!(html.contains("<td>2</td><td>rule 2</td><td>skipped</td>"));
-    assert!(html.contains("<td>1</td><td>Scenario 1</td><td>failed</td>"));
-    assert!(html.contains("<td>2</td><td>Scenario 1</td><td>skipped</td>"));
+    assert!(html.contains("<td colspan=\"2\">rule 1</td><td>failed</td>"));
+    assert!(html.contains("<td colspan=\"2\">rule 2</td><td>skipped</td>"));
     let summary = html
-        .split("Scenario summary</h4>")
+        .split("Rules and scenarios summary</h3>")
         .nth(1)
         .unwrap()
         .split("</table>")
         .next()
         .unwrap();
+    assert!(summary.contains("<td colspan=\"2\">rule 1</td><td>failed</td>"));
     assert!(summary.contains(
-        "<td>1</td><td>Scenario 1</td><td>failed</td><td>First rule failure</td>"
+        "<td><a href=\"#feature-0-scenario-6\">Scenario 1</a></td><td>failed</td>"
     ));
+    assert!(summary.contains("<td colspan=\"2\">rule 2</td><td>skipped</td>"));
     assert!(summary.contains(
-        "<td>2</td><td>Scenario 1</td><td>skipped</td><td>Second rule skipped</td>"
+        "<td><a href=\"#feature-0-scenario-34\">Scenario 1</a></td><td>skipped</td>"
     ));
-    assert_eq!(summary.matches("<tr>").count(), 4);
-    assert_eq!(summary.matches("First rule failure").count(), 1);
-    assert_eq!(summary.matches("Second rule skipped").count(), 1);
+    assert_eq!(summary.matches("<tr>").count(), 6);
+    assert!(!summary.contains("First rule failure"));
+    assert!(!summary.contains("Second rule skipped"));
 
     std::fs::remove_file(results_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
 }
 
 #[test]
-fn groups_outline_errors_and_preserves_unmatched_errors_in_summary() {
+fn groups_outline_results_without_error_details_in_summary() {
     let base_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-outline-summary-{}",
         std::process::id()
@@ -281,23 +289,32 @@ fn groups_outline_errors_and_preserves_unmatched_errors_in_summary() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
-    let summary = html
-        .split("Scenario summary</h4>")
+    let rule_summary = html
+        .split("Rules and scenarios summary</h3>")
         .nth(1)
         .unwrap()
         .split("</table>")
         .next()
         .unwrap();
-    assert!(summary.contains(
-        "<td colspan=\"2\">Shared name</td><td>failed</td><td>Standalone failure</td>"
+    assert!(rule_summary.contains("<td colspan=\"2\">A rule</td><td>failed</td>"));
+    assert!(rule_summary.contains(
+        "<td></td><td><a href=\"#feature-0-scenario-5\">Shared name</a></td><td>failed</td>"
     ));
-    assert!(summary.contains(
-        "<td>1</td><td>Shared name</td><td>failed</td><td>First example failure<br>Second example failure</td>"
+    let scenario_summary = html
+        .split("Scenario summary</h3>")
+        .nth(1)
+        .unwrap()
+        .split("</table>")
+        .next()
+        .unwrap();
+    assert!(scenario_summary.contains(
+        "<td><a href=\"#feature-0-scenario-2\">Shared name</a></td><td>failed</td>"
     ));
-    assert!(summary.contains(
-        "<td colspan=\"2\">Shared name</td><td>failed</td><td>Unmatched failure</td>"
-    ));
-    assert_eq!(summary.matches("<tr>").count(), 4);
+    assert_eq!(scenario_summary.matches("<tr>").count(), 3);
+    assert!(!scenario_summary.contains("Standalone failure"));
+    assert!(!scenario_summary.contains("First example failure"));
+    assert!(!scenario_summary.contains("Second example failure"));
+    assert!(!scenario_summary.contains("Unmatched failure"));
 
     std::fs::remove_file(spec_path).unwrap();
     std::fs::remove_file(results_path).unwrap();
@@ -337,6 +354,87 @@ fn renders_feature_introduction_from_markdown_file() {
     assert!(!html.contains("**"));
 
     std::fs::remove_file(introduction_path).unwrap();
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn customizes_section_headings_from_report_info_yaml() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-custom-headings-{}.html",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-with-rules.feature");
+    let run_info: ReportInfo = serde_yaml::from_str(
+        r#"headings:
+  features: "Feature overview"
+  rules_and_scenarios_summary: "Rule summary"
+  requirements: "Rule details"
+  tag_index: "Tags""#,
+    )
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    let (contents, body) = html.split_once("</nav>").unwrap();
+    assert!(!contents.contains("Feature overview"));
+    assert!(body.contains("font-weight: bold; margin-block: 0.83em\">Feature overview</div>"));
+    assert!(body.contains("<h2 id=\"feature-0\">1. rules</h2>"));
+    assert!(body.contains("<h4 id=\"feature-0-scenario-6\">1.3.1. Scenario 1</h4>"));
+    assert!(html.contains("Rule summary"));
+    assert!(html.contains("Rule details"));
+    assert!(html.contains("Tags"));
+    assert!(!html.contains("Features"));
+    assert!(!html.contains("Rules and scenarios summary"));
+    assert!(!html.contains("Requirements"));
+    assert!(!html.contains("Tag index"));
+
+    std::fs::remove_file(output_path).unwrap();
+}
+
+#[test]
+fn customizes_summary_and_step_table_headers_from_report_info_yaml() {
+    let output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-custom-table-headers-{}.html",
+        std::process::id()
+    ));
+    let spec_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("features/feature-with-rules.feature");
+    let run_info: ReportInfo = serde_yaml::from_str(
+        r#"table_headers:
+  feature: "Capability"
+  rule: "Requirement"
+  scenario: "Example"
+  result: "Status"
+  step: "Action""#,
+    )
+    .unwrap();
+
+    ReportGenerator::generate_report(
+        &vec![spec_path],
+        &None,
+        output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &run_info,
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&output_path).unwrap();
+    assert!(html.contains("<td>Capability</td><td>Status</td>"));
+    assert!(html.contains("<td>Requirement</td><td>Example</td><td>Status</td>"));
+    assert!(html.contains("<td colspan=\"2\">Action</td><td>Status</td>"));
+    assert!(!html.contains("<td>Feature</td><td>Result</td>"));
+    assert!(!html.contains("<td>Rule</td><td>Scenario</td><td>Result</td>"));
+    assert!(!html.contains("<td colspan=\"2\">Step</td><td>Result</td>"));
+
     std::fs::remove_file(output_path).unwrap();
 }
 
@@ -381,7 +479,7 @@ fn renders_header_and_footer_from_markdown_files() {
     assert!(!html.contains("*Markdown footer*"));
     let header_position = html.find("Markdown header").unwrap();
     let contents_end = html.find("</nav>").unwrap();
-    let features_position = html.find("<h2 id=\"loc-1\">1. Features</h2>").unwrap();
+    let features_position = html.find(">Features</div>").unwrap();
     assert!(contents_end < header_position);
     assert!(header_position < features_position);
 
@@ -636,7 +734,7 @@ fn includes_feature_parse_errors_in_typst_output() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
-    assert!(html.contains("Errors"));
+    assert!(!html.contains("<td>Errors</td>"));
     assert!(html.contains("Could not parse feature file"));
     assert!(html.contains("feature-syntaxt-error"));
 
@@ -713,19 +811,24 @@ fn includes_multiple_feature_errors_in_typst_output() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
-    assert!(html.contains("Errors"));
+    assert!(!html.contains("<td>Errors</td>"));
     assert!(html.contains("First error message"));
     assert!(html.contains("Second error message"));
     let summary = html
-        .split("Scenario summary</h4>")
+        .split("Scenario summary</h3>")
         .nth(1)
         .unwrap()
         .split("</table>")
         .next()
         .unwrap();
-    assert_eq!(summary.matches("<td>Scenario 1</td>").count(), 1);
-    assert_eq!(summary.matches("First error message").count(), 1);
-    assert_eq!(summary.matches("Second error message").count(), 1);
+    assert_eq!(
+        summary
+            .matches("<a href=\"#feature-0-scenario-5\">Scenario 1</a>")
+            .count(),
+        1
+    );
+    assert!(!summary.contains("First error message"));
+    assert!(!summary.contains("Second error message"));
 
     std::fs::remove_file(&results_path).unwrap();
     std::fs::remove_file(output_path).unwrap();

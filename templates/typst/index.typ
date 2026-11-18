@@ -1,7 +1,7 @@
 #import sys: inputs, version
 #import "@preview/in-dexter:0.7.2": *
 #import "feature.typ": *
-#import "styles.typ": render_markdown, render_table_header
+#import "styles.typ": render_markdown, render_overview_title, render_table_header
 
 #let runinfo = inputs.at("runinfo", default: {})
 #let is-html = inputs.at("is_html", default: false)
@@ -20,12 +20,24 @@
   let page_number = counter(page).get().first()
   if page_number > 1 { render_runinfo_content(field) } else { [] }
 }
+#let render_page_footer() = context {
+  let page_number = counter(page).get().first()
+  if page_number > 1 {
+    if runinfo.at("footer", default: none) == none {
+      [Page #page_number of #counter(page).final().first()]
+    } else {
+      render_runinfo_content("footer")
+    }
+  } else {
+    []
+  }
+}
 
 #set page(
   paper: "a4",
   margin: (top: 1.5cm, bottom: 1.5cm, left: 1.2cm, right: 1.2cm),
   header: if is-html { [] } else { render_page_content("header") },
-  footer: if is-html { [] } else { render_page_content("footer") },
+  footer: if is-html { [] } else { render_page_footer() },
 )
 
 #set text(font: "New Computer Modern", size: 11pt)
@@ -62,8 +74,10 @@
 ]
 
 #let features = inputs.at("features", default: ())
+#let headings = runinfo.at("headings", default: (:))
+#let table_headers = runinfo.at("table_headers", default: (:))
 
-= Features
+#render_overview_title(headings.at("features", default: "Features"), is-html: is-html)
 
 #let feature-introduction = runinfo.at("feature_introduction", default: none)
 #if feature-introduction != none [
@@ -93,7 +107,8 @@
     inset: 4pt,
     align: left,
     stroke: table_stroke,
-    render_table_header([Feature]), render_table_header([Result]),
+    render_table_header(table_headers.at("feature", default: "Feature")),
+    render_table_header(table_headers.at("result", default: "Result")),
     ..summary_rows.flatten(),
   )
   #pagebreak()
@@ -101,7 +116,7 @@
 
 #if features != none {
   for (index, item) in features.enumerate() [
-    #render_feature(item, index: index)
+    #render_feature(item, index: index, headings: headings, table_headers: table_headers)
     #if index < features.len() - 1 [
       #pagebreak()
     ]
@@ -109,7 +124,7 @@
 }
 
 #pagebreak()
-= Tag index
+= #headings.at("tag_index", default: "Tag index")
 #columns(2)[
   #make-index(title: none,outlined: true )
 ]

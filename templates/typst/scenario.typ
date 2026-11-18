@@ -25,15 +25,23 @@
   ]
 }
 
-#let render_steps_table(steps, show_outcome: true) = {
+#let render_steps_table(steps, table_headers, show_outcome: true) = {
   let columns = if show_outcome { (auto, 1.8fr, auto) } else { (auto, 1.8fr) }
   let headers = if show_outcome {
     (
-      table.cell(colspan: 2, render_table_header([Step])),
-      render_table_header([Result]),
+      table.cell(
+        colspan: 2,
+        render_table_header(table_headers.at("step", default: "Step")),
+      ),
+      render_table_header(table_headers.at("result", default: "Result")),
     )
   } else {
-    (table.cell(colspan: 2, render_table_header([Step])),)
+    (
+      table.cell(
+        colspan: 2,
+        render_table_header(table_headers.at("step", default: "Step")),
+      ),
+    )
   }
 
   table(
@@ -59,22 +67,27 @@
   )
 }
 
-#let render_background(background) = {
+#let render_background(background, table_headers: (:)) = {
   if background.description != none [
     #render_description(background.description)
   ]
 
   if background.steps.len() > 0 [
-    #render_steps_table(background.steps)
+    #render_steps_table(background.steps, table_headers)
   ]
 }
 
-#let render_scenario(scenario, level: 3, show_step_outcome: true) = {
-  if level == 4 {
-    [==== #scenario.name]
-  } else {
-    [=== #scenario.name]
-  }
+#let render_scenario(
+  scenario,
+  level: 2,
+  show_step_outcome: true,
+  target: none,
+  table_headers: (:),
+) = {
+  [
+    #heading(level: level)[#scenario.name]
+    #if target != none { label(target) }
+  ]
 
   if scenario.description != none [
     #render_description(scenario.description)
@@ -85,7 +98,11 @@
   ]
 
   if scenario.steps.len() > 0 [
-    #render_steps_table(scenario.steps, show_outcome: show_step_outcome)
+    #render_steps_table(
+      scenario.steps,
+      table_headers,
+      show_outcome: show_step_outcome,
+    )
   ] else [
     #emph[No steps defined for this scenario.]
   ]

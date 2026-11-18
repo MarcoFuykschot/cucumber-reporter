@@ -33,10 +33,32 @@ author: "By someone"
 sub_title: "Subtile is a nice title"
 time_run: "2026-10-15T15:15:15Z"
 feature_introduction: "features/feature-introduction.md"
+headings:
+  features: "Feature overview"
+  rules_summary: "Rule summary"
+  rules_and_scenarios_summary: "Rules and scenarios overview"
+  scenario_summary: "Scenario overview"
+  requirements: "Rule details"
+  background: "Common setup"
+  tag_index: "Tags"
+table_headers:
+  feature: "Capability"
+  rule: "Requirement"
+  scenario: "Test case"
+  result: "Outcome"
+  step: "Action"
 title_page: "features/report-title-page.md"
 header: "features/report-header.md"
 footer: "features/report-footer.md"
 ```
+
+The optional `headings` values customize the report's section labels. When
+omitted, each uses its default text. `headings.features` sets the styled,
+unnumbered overview title, which does not appear in the table of contents.
+
+The optional `table_headers` values customize labels in feature and scenario
+summary tables and scenario step tables. When omitted, each uses its default
+text.
 
 `feature_introduction` must be the path to an existing `.md`, `.typ`, or `.txt`
 file. Markdown files are rendered as Markdown, Typst files as Typst markup, and
@@ -52,6 +74,8 @@ files. Their content is rendered in the header or footer on each PDF page,
 except for the title page. In experimental HTML output, the header appears
 after the contents list and the footer at the end of the document. Markdown
 files are rendered as Markdown and Typst files as Typst markup.
+When no custom footer is configured, PDF pages include right-aligned page
+numbering ("Page X of Y"). A custom footer replaces the default numbering.
 
 A complete example using Typst files for the title page, header, and footer is
 available in [features/reportinfo-typst.yaml](features/reportinfo-typst.yaml).

@@ -6,13 +6,18 @@
 
 #show table.cell: set text(hyphenate: true)
 
-#let render_feature(feature, index: none) = {
-  let render_element(element, level: 3) = {
+#let render_feature(feature, index: none, headings: (:), table_headers: (:)) = {
+  let render_element(element, level: 2) = {
+    let target = if index != none {
+      "feature-" + str(index) + "-scenario-" + str(element.line)
+    } else {
+      none
+    }
     if element.keyword == "Scenario" {
-      render_scenario(element, level: level)
+      render_scenario(element, level: level, target: target, table_headers: table_headers)
     } else {
       if element.keyword == "Scenario Outline" {
-        render_outline(element, level: level)
+        render_outline(element, level: level, target: target, table_headers: table_headers)
       }
     }
   }
@@ -20,90 +25,77 @@
   if feature == none [
     #emph[Feature data is missing in the inputs.]
   ] else {
+    let target = if index != none { "feature-" + str(index) } else { none }
     [
-      #grid(
-        columns: (auto, auto),
-        gutter: 0.5em,
-        align: (left, bottom),
-        [== #feature.name]
-      )
-      #if index != none [
-        #let feature-id = "feature-" + str(index)
-        #label(feature-id)
-      ]
+      #heading(level: 1)[#feature.name]
+      #if target != none { label(target) }
 
       #render_tags(feature.tags)
 
       #render_description(feature.description)
 
-      #let rules_table = feature.rules.enumerate().map(((rule-index, rule)) => {
-        (
-          [#(rule-index + 1)],
-          [#rule.name],
-          if rule.outcome != none [#outcome(rule.outcome)] else [],
-        )
-      })
       #let has-rule-scenarios = feature.has_rule_scenarios
+      #let rules_table = feature.rules.enumerate().map(((rule-index, rule)) => {
+        let rule-key = str(rule-index + 1)
+        let rule_result = if rule.outcome != none [#outcome(rule.outcome)] else []
+        let rule_row = (table.cell(colspan: 2)[#rule.name], rule_result)
+        let rule_scenarios = feature.summary_rows.filter(summary => summary.rule == rule-key)
+        let scenario_rows = rule_scenarios.map(summary => {
+            let result = if summary.outcome != none [#outcome(summary.outcome)] else []
+            let scenario = if summary.line != none and index != none {
+              let target = "feature-" + str(index) + "-scenario-" + str(summary.line)
+              [#link(label(target))[#summary.scenario]]
+            } else {
+              [#summary.scenario]
+            }
+            ([], scenario, result)
+          })
+        (rule_row, ..scenario_rows)
+      }).flatten().flatten()
       #if rules_table.len() > 0 [
-        === Rules summary
+        #if has-rule-scenarios [
+          == #headings.at("rules_and_scenarios_summary", default: "Rules and scenarios summary")
+        ] else [
+          == #headings.at("rules_summary", default: "Rules summary")
+        ]
         #table(
           columns: (auto, 1fr, auto),
           inset: 4pt,
           stroke: table_stroke,
-          render_table_header([\#]),
-          render_table_header([Rule]),
-          render_table_header([Result]),
-          ..rules_table.flatten(),
+          render_table_header(table_headers.at("rule", default: "Rule")),
+          render_table_header(table_headers.at("scenario", default: "Scenario")),
+          render_table_header(table_headers.at("result", default: "Result")),
+          ..rules_table,
         )
       ]
 
-      #let summary_rows = feature.summary_rows.map(row => {
-        let result = if row.outcome != none [#outcome(row.outcome)] else []
-        let errors = [#row.errors]
-        if has-rule-scenarios {
-          if row.rule == none {
-            (table.cell(colspan: 2)[#row.scenario], result, errors)
-          } else {
-            ([#row.rule], [#row.scenario], result, errors)
-          }
+      #let feature_scenarios = feature.summary_rows.filter(summary => summary.rule == none)
+      #let summary_rows = feature_scenarios.map(summary => {
+        let result = if summary.outcome != none [#outcome(summary.outcome)] else []
+        let scenario = if summary.line != none and index != none {
+          let target = "feature-" + str(index) + "-scenario-" + str(summary.line)
+          [#link(label(target))[#summary.scenario]]
         } else {
-          ([#row.scenario], result, errors)
+          [#summary.scenario]
         }
+        (scenario, result)
       })
       #if summary_rows.len() > 0 [
-        === Scenario summary
-        #let summary-columns = if has-rule-scenarios {
-          (auto, 1fr, auto, 1.5fr)
-        } else {
-          (1fr, auto, 1.5fr)
-        }
-        #let summary-headers = if has-rule-scenarios {
-          (
-            render_table_header([Rule]),
-            render_table_header([Scenario]),
-            render_table_header([Result]),
-            render_table_header([Errors]),
-          )
-        } else {
-          (
-            render_table_header([Scenario]),
-            render_table_header([Result]),
-            render_table_header([Errors]),
-          )
-        }
+        == #headings.at("scenario_summary", default: "Scenario summary")
         #table(
-          columns: summary-columns,
+          columns: (1fr, auto),
           inset: 4pt,
           stroke: table_stroke,
-          ..summary-headers,
+          render_table_header(table_headers.at("scenario", default: "Scenario")),
+          render_table_header(table_headers.at("result", default: "Result")),
           ..summary_rows.flatten(),
         )
       ]
 
       #if feature.rules.len() > 0 [
-        === Requirements
+        == #headings.at("requirements", default: "Requirements")
         #for rule in feature.rules [
-          === #rule.name
+          == #rule.name
           #if rule.description != none [
             #render_description(rule.description)
           ]
@@ -111,7 +103,7 @@
             #render_tags(rule.tags)
           ]
           #for scenario in rule.scenarios [
-            #render_element(scenario, level: 4)
+            #render_element(scenario, level: 3)
           ]
         ]
       ]
@@ -120,14 +112,14 @@
         (feature.background.description != none and feature.background.description.len() > 0)
         or feature.background.steps.len() > 0
       ) [
-        === Background
-        #render_background(feature.background)
+        == #headings.at("background", default: "Background")
+        #render_background(feature.background, table_headers: table_headers)
       ]
 
       #if feature.scenarios.len() > 0 [
-        === Scenarios
+        == Scenarios
         #for scenario in feature.scenarios [
-          #render_element(scenario, level: 3)
+          #render_element(scenario)
         ]
       ]
     ]
