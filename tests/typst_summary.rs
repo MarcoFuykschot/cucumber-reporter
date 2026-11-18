@@ -231,8 +231,13 @@ fn groups_outline_results_without_error_details_in_summary() {
         "Feature: Outline summary\n\
          Scenario: Shared name\n\
            Given a fact\n\
+         Scenario Outline: Standalone <value>\n\
+           Given value <value>\n\
+           Examples:\n\
+             | value |\n\
+             | other |\n\
          Rule: A rule\n\
-           Scenario Outline: Shared name\n\
+           Scenario Outline: Shared <value>\n\
              Given value <value>\n\
              Examples:\n\
                | value |\n\
@@ -242,8 +247,8 @@ fn groups_outline_results_without_error_details_in_summary() {
     .unwrap();
     let elements = [
         (2, "Shared name", "Standalone failure"),
-        (9, "A rule Shared name", "First example failure"),
-        (10, "A rule Shared name", "Second example failure"),
+        (14, "A rule Shared name", "First example failure"),
+        (15, "A rule Shared name", "Second example failure"),
         (0, "Shared name", "Unmatched failure"),
     ]
     .map(|(line, name, message)| {
@@ -298,7 +303,7 @@ fn groups_outline_results_without_error_details_in_summary() {
         .unwrap();
     assert!(rule_summary.contains("<td colspan=\"2\">A rule</td><td>failed</td>"));
     assert!(rule_summary.contains(
-        "<td></td><td><a href=\"#feature-0-scenario-5\">Shared name</a></td><td>failed</td>"
+        "<td></td><td><a href=\"#feature-0-scenario-10\">Shared value</a></td><td>failed</td>"
     ));
     let scenario_summary = html
         .split("Scenario summary</h3>")
@@ -308,9 +313,14 @@ fn groups_outline_results_without_error_details_in_summary() {
         .next()
         .unwrap();
     assert!(scenario_summary.contains(
-        "<td><a href=\"#feature-0-scenario-2\">Shared name</a></td><td>failed</td>"
+        "<td><a href=\"#feature-0-scenario-4\">Standalone value</a></td><td>passed</td>"
     ));
-    assert_eq!(scenario_summary.matches("<tr>").count(), 3);
+    assert!(!scenario_summary.contains("&lt;value&gt;"));
+    assert!(
+        scenario_summary
+            .contains("<td><a href=\"#feature-0-scenario-2\">Shared name</a></td><td>failed</td>")
+    );
+    assert_eq!(scenario_summary.matches("<tr>").count(), 4);
     assert!(!scenario_summary.contains("Standalone failure"));
     assert!(!scenario_summary.contains("First example failure"));
     assert!(!scenario_summary.contains("Second example failure"));
