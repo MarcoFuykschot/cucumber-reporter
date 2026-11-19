@@ -44,6 +44,11 @@
 #set heading(numbering: "1.")
 
 #show table.cell: set text(hyphenate: true)
+#show regex("<[^>]+>"): placeholder => {
+  show "<": ""
+  show ">": ""
+  text(style: "italic", fill: gray)[#placeholder]
+}
 
 #if runinfo != none {
   set document(

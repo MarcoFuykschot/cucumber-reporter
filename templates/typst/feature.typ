@@ -97,7 +97,6 @@
       ]
 
       #if feature.rules.len() > 0 [
-        == #headings.at("requirements", default: "Requirements")
         #for rule in feature.rules [
           == #rule.name
           #if rule.description != none [

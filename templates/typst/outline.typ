@@ -16,12 +16,6 @@
 }
 
 #let render_outline(scenario, level: 2, target: none, table_headers: (:)) = {
-  show regex("<[^>]+>"): placeholder => {
-    show "<": ""
-    show ">": ""
-    text(style: "italic", fill: gray)[#placeholder]
-  }
-
   render_scenario(
     scenario,
     level: level,
@@ -50,9 +44,9 @@
           inset: 4pt,
           ..rows.enumerate().map(((index, row)) => row.map(cell => {
             if index == 0 {
-              render_table_header(outcome(cell))
+              render_table_header(outcome(render_outline_text(cell)))
             } else {
-              outcome(cell)
+              outcome(render_outline_text(cell))
             }
           })).flatten()
         )

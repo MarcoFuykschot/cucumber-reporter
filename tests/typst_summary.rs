@@ -235,7 +235,7 @@ fn groups_outline_results_without_error_details_in_summary() {
            Given value <value>\n\
            Examples:\n\
              | value |\n\
-             | other |\n\
+             | <other> |\n\
          Rule: A rule\n\
            Scenario Outline: Shared <value>\n\
              Given value <value>\n\
@@ -294,6 +294,9 @@ fn groups_outline_results_without_error_details_in_summary() {
     .unwrap();
 
     let html = std::fs::read_to_string(&output_path).unwrap();
+    let contents = html.split("</nav>").next().unwrap();
+    assert!(contents.contains("Shared value"));
+    assert!(!contents.contains("&lt;value>"));
     let rule_summary = html
         .split("Rules and scenarios summary</h3>")
         .nth(1)
@@ -316,6 +319,8 @@ fn groups_outline_results_without_error_details_in_summary() {
         "<td><a href=\"#feature-0-scenario-4\">Standalone value</a></td><td>passed</td>"
     ));
     assert!(!scenario_summary.contains("&lt;value&gt;"));
+    assert!(!html.contains("&lt;value>"));
+    assert!(html.contains("<td>other</td>"));
     assert!(
         scenario_summary
             .contains("<td><a href=\"#feature-0-scenario-2\">Shared name</a></td><td>failed</td>")

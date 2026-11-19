@@ -36,3 +36,13 @@ Feature: rules
             And a other fact
             When something is executed
             Then the result is failed
+            
+        Scenario Outline: Scenario Outline 1 <input>
+            Given a fact
+            And a other fact
+            When something is executed
+            Then the result is failed
+
+            Examples:
+                | input | expected |
+                | 1     | failed   |
