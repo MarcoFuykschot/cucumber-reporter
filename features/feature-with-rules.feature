@@ -30,6 +30,9 @@ Feature: rules
 | A | B |
 |---|---|
 | 1 | longer column |
+    
+        Background: Background name
+            Given a fact
 
         Scenario: Scenario 1
             Given a fact

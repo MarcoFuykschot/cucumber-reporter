@@ -105,6 +105,13 @@
           #if rule.tags.len() > 0 [
             #render_tags(rule.tags)
           ]
+          #if rule.background != none and (
+            (rule.background.description != none and rule.background.description.len() > 0)
+            or rule.background.steps.len() > 0
+          ) [
+            === #headings.at("background", default: "Background")
+            #render_background(rule.background, table_headers: table_headers)
+          ]
           #for scenario in rule.scenarios [
             #render_element(scenario, level: 3)
           ]
