@@ -44,27 +44,30 @@
     )
   }
 
-  table(
-    columns: columns,
-    stroke: table_stroke,
-    inset: 4pt,
-    align: if show_outcome { (left, left, right) } else { (left, left) },
-    ..headers,
-    ..steps
-      .map(step => {
-        let keyword = [#text(fill: blue, weight: "bold")[#step.keyword]]
-        let description = [
-          #text(size: 0.95em)[#step.text]
-          #render_step_details(step)
-        ]
-        if show_outcome {
-          (keyword, description, [#outcome(step.outcome)])
-        } else {
-          (keyword, description)
-        }
-      })
-      .flatten(),
-  )
+  {
+    set text(size: 0.9em)
+    table(
+      columns: columns,
+      stroke: table_stroke,
+      inset: 4pt,
+      align: if show_outcome { (left, left, right) } else { (left, left) },
+      ..headers,
+      ..steps
+        .map(step => {
+          let keyword = [#text(size: 0.95em, fill: blue, weight: "bold")[#step.keyword]]
+          let description = [
+            #text(size: 0.95em)[#step.text]
+            #render_step_details(step)
+          ]
+          if show_outcome {
+            (keyword, description, [#outcome(step.outcome)])
+          } else {
+            (keyword, description)
+          }
+        })
+        .flatten(),
+    )
+  }
 }
 
 #let render_background(background, table_headers: (:)) = {

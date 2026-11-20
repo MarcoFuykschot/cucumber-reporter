@@ -987,6 +987,10 @@ fn renders_background_and_rule_sections() {
         "cucumber-reporter-background-{}.pdf",
         std::process::id()
     ));
+    let html_output_path = std::env::temp_dir().join(format!(
+        "cucumber-reporter-background-{}.html",
+        std::process::id()
+    ));
     let spec_path = std::env::temp_dir().join(format!(
         "cucumber-reporter-background-{}.feature",
         std::process::id()
@@ -1002,8 +1006,10 @@ fn renders_background_and_rule_sections() {
          @RuleTag\n\
          Rule: Rule styling\n\
          A rule description\n\
+         Background:\n\
+         Given a rule-specific state\n\
          Scenario: Rule scenario\n\
-         Given a rule-specific state\n",
+         Given a rule scenario-specific state\n",
     )
     .unwrap();
 
@@ -1019,8 +1025,23 @@ fn renders_background_and_rule_sections() {
     let pdf = std::fs::read(&output_path).unwrap();
     assert!(pdf.starts_with(b"%PDF-"));
 
+    ReportGenerator::generate_report(
+        &vec![spec_path.clone()],
+        &None,
+        html_output_path.to_str().unwrap(),
+        ReportFormat::Html,
+        &ReportInfo::default(),
+    )
+    .unwrap();
+
+    let html = std::fs::read_to_string(&html_output_path).unwrap();
+    assert!(html.contains("a shared state"));
+    assert!(html.contains("a rule-specific state"));
+    assert!(html.contains("a rule scenario-specific state"));
+
     std::fs::remove_file(spec_path).unwrap();
     std::fs::remove_file(output_path).unwrap();
+    std::fs::remove_file(html_output_path).unwrap();
 }
 
 #[test]

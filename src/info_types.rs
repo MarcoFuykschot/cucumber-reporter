@@ -357,6 +357,7 @@ impl GherkinToDict for RuleInfo {
         dict! {
             "name" => self.rule.name.clone(),
             "description" => self.rule.description.as_ref().map_or_else(|| Value::None, |d| Value::Str(d.clone().into())),
+            "background" => self.rule.background.as_ref().map(|background| background.to_dict()),
             "outcome" => self.outcome().map_or_else(|| Value::None, |result| result.to_string().into_value()),
             "scenarios" => Array::from_iter(
                 self.rule.scenarios.iter().map(|s| self.feature.get_scenario_info(s))),
